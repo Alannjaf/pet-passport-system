@@ -1,0 +1,203 @@
+{
+  "common": {
+    "appName": "Pet Passport System",
+    "login": "Login",
+    "logout": "Logout",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "download": "Download",
+    "print": "Print",
+    "generate": "Generate",
+    "add": "Add",
+    "update": "Update",
+    "block": "Block",
+    "unblock": "Unblock",
+    "reset": "Reset"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "clinics": "Clinics",
+    "pets": "Pets",
+    "qrGenerator": "QR Generator",
+    "history": "History",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "landing": {
+    "hero": {
+      "title": "Pet Passport System",
+      "subtitle": "Complete pet health management and digital passport solution",
+      "description": "A comprehensive platform for pet clinics, syndicate, and pet owners to manage pet health records, vaccinations, and digital passports.",
+      "clinicLogin": "Clinic Login",
+      "scanQR": "Scan QR Code"
+    },
+    "features": {
+      "title": "Features",
+      "syndicate": {
+        "title": "For Syndicate",
+        "description": "Manage clinics, generate QR codes, view complete history"
+      },
+      "clinics": {
+        "title": "For Clinics",
+        "description": "Create and manage pet profiles, track vaccinations"
+      },
+      "owners": {
+        "title": "For Pet Owners",
+        "description": "View pet profiles, vaccination history, and health records"
+      }
+    }
+  },
+  "auth": {
+    "loginTitle": "Login to Your Account",
+    "accountNumber": "Account Number",
+    "password": "Password",
+    "loginButton": "Sign In",
+    "invalidCredentials": "Invalid account number or password",
+    "accountBlocked": "Your account has been blocked",
+    "syndicateLogin": "Syndicate Login",
+    "clinicLogin": "Clinic Login"
+  },
+  "syndicate": {
+    "dashboard": {
+      "title": "Syndicate Dashboard",
+      "welcome": "Welcome, Syndicate Admin",
+      "totalClinics": "Total Clinics",
+      "totalQRCodes": "Total QR Codes",
+      "totalPets": "Total Pets",
+      "activeClinics": "Active Clinics"
+    },
+    "clinics": {
+      "title": "Manage Clinics",
+      "addClinic": "Add New Clinic",
+      "clinicName": "Clinic Name",
+      "accountNumber": "Account Number",
+      "contactInfo": "Contact Information",
+      "status": "Status",
+      "createdAt": "Created At",
+      "actions": "Actions",
+      "active": "Active",
+      "blocked": "Blocked",
+      "blockClinic": "Block Clinic",
+      "unblockClinic": "Unblock Clinic",
+      "deleteClinic": "Delete Clinic",
+      "resetPassword": "Reset Password",
+      "confirmDelete": "Are you sure you want to delete this clinic?",
+      "clinicAdded": "Clinic added successfully",
+      "clinicUpdated": "Clinic updated successfully",
+      "clinicDeleted": "Clinic deleted successfully",
+      "passwordReset": "Password reset successfully",
+      "newPassword": "New Password"
+    },
+    "qrGenerator": {
+      "title": "QR Code Generator",
+      "quantity": "Quantity",
+      "generate": "Generate QR Codes",
+      "downloadPDF": "Download as PDF",
+      "downloadZIP": "Download as ZIP",
+      "generated": "QR codes generated successfully",
+      "preview": "Preview"
+    }
+  },
+  "clinic": {
+    "dashboard": {
+      "title": "Clinic Dashboard",
+      "welcome": "Welcome",
+      "totalPets": "Total Pets",
+      "recentPets": "Recent Pets",
+      "noPets": "No pets found"
+    },
+    "pets": {
+      "title": "My Pets",
+      "addPet": "Add New Pet",
+      "editPet": "Edit Pet",
+      "petName": "Pet Name",
+      "species": "Species",
+      "breed": "Breed",
+      "age": "Age",
+      "lastEdited": "Last Edited",
+      "viewProfile": "View Profile"
+    }
+  },
+  "petForm": {
+    "title": "Pet Profile",
+    "basicInfo": "Basic Information",
+    "ownerInfo": "Owner Information",
+    "medicalInfo": "Medical Information",
+    "vaccinations": "Vaccinations",
+    "petName": "Pet Name",
+    "species": "Species",
+    "breed": "Breed",
+    "dateOfBirth": "Date of Birth",
+    "age": "Age",
+    "gender": "Gender",
+    "color": "Color",
+    "microchipNumber": "Microchip Number",
+    "ownerName": "Owner Name",
+    "ownerPhone": "Owner Phone",
+    "ownerEmail": "Owner Email",
+    "ownerAddress": "Owner Address",
+    "secondaryContact": "Secondary Contact",
+    "photo": "Pet Photo",
+    "uploadPhoto": "Upload Photo",
+    "allergies": "Allergies",
+    "chronicConditions": "Chronic Conditions",
+    "currentMedications": "Current Medications",
+    "additionalNotes": "Additional Notes",
+    "vaccinationType": "Vaccination Type",
+    "vaccinationDate": "Date Administered",
+    "nextDueDate": "Next Due Date",
+    "batchNumber": "Batch Number",
+    "notes": "Notes",
+    "addVaccination": "Add Vaccination",
+    "removeVaccination": "Remove",
+    "male": "Male",
+    "female": "Female",
+    "dog": "Dog",
+    "cat": "Cat",
+    "bird": "Bird",
+    "rabbit": "Rabbit",
+    "other": "Other",
+    "rabies": "Rabies",
+    "parvo": "Parvo",
+    "distemper": "Distemper",
+    "fvrcp": "FVRCP",
+    "bordetella": "Bordetella",
+    "required": "Required field",
+    "saved": "Pet profile saved successfully",
+    "error": "Error saving pet profile"
+  },
+  "petView": {
+    "title": "Pet Profile",
+    "basicInfo": "Basic Information",
+    "ownerInfo": "Owner Information",
+    "vaccinationHistory": "Vaccination History",
+    "medicalHistory": "Medical History",
+    "lastUpdated": "Last updated by",
+    "on": "on",
+    "noVaccinations": "No vaccinations recorded",
+    "dueSoon": "Due Soon",
+    "overdue": "Overdue",
+    "upToDate": "Up to Date",
+    "downloadPDF": "Download PDF",
+    "qrCode": "QR Code"
+  },
+  "scan": {
+    "title": "Scan QR Code",
+    "scanning": "Scanning...",
+    "notActivated": "This QR code needs to be activated by a clinic",
+    "contactClinic": "Please contact a registered clinic to create a pet profile"
+  }
+}
+
