@@ -40,6 +40,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.13.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/qrcode": "^1.5.5",
     "drizzle-kit": "^0.31.5",
