@@ -104,7 +104,7 @@ export default async function ClinicDashboard() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600">
               View All Pets
             </h3>
-            <p className="text-gray-600">Browse all pet profiles you've created or edited</p>
+            <p className="text-gray-600">Browse all pet profiles you&apos;ve created or edited</p>
           </Link>
         </div>
       </div>

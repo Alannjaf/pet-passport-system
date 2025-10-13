@@ -5,7 +5,7 @@ import PetProfileForm from '@/components/forms/PetProfileForm'
 export default async function NewPetPage({
   searchParams,
 }: {
-  searchParams: { qrCodeId?: string }
+  searchParams: Promise<{ qrCodeId?: string }>
 }) {
   const session = await auth()
 
@@ -13,7 +13,9 @@ export default async function NewPetPage({
     redirect('/login')
   }
 
-  if (!searchParams.qrCodeId) {
+  const { qrCodeId } = await searchParams
+
+  if (!qrCodeId) {
     redirect('/syndicate/dashboard')
   }
 
@@ -21,10 +23,10 @@ export default async function NewPetPage({
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Create Pet Profile</h1>
-        <p className="text-gray-600 mt-2">Fill in the pet's information</p>
+        <p className="text-gray-600 mt-2">Fill in the pet&apos;s information</p>
       </div>
 
-      <PetProfileForm qrCodeId={searchParams.qrCodeId} session={session} />
+      <PetProfileForm qrCodeId={qrCodeId} session={session} />
     </div>
   )
 }

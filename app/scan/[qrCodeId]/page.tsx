@@ -4,10 +4,11 @@ import { qrCodes, petProfiles } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 import { randomUUID } from 'crypto'
+import Link from 'next/link'
 
-export default async function ScanPage({ params }: { params: { qrCodeId: string } }) {
+export default async function ScanPage({ params }: { params: Promise<{ qrCodeId: string }> }) {
   const session = await auth()
-  const { qrCodeId } = params
+  const { qrCodeId } = await params
 
   // Check if QR code exists
   const qrCode = await db.select().from(qrCodes).where(eq(qrCodes.qrCodeId, qrCodeId)).limit(1)
@@ -46,12 +47,12 @@ export default async function ScanPage({ params }: { params: { qrCodeId: string 
             <p className="text-gray-600 mb-6">
               This QR code needs to be activated by a registered clinic. Please contact a clinic to create a pet profile.
             </p>
-            <a
+            <Link
               href="/"
               className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               Back to Home
-            </a>
+            </Link>
           </div>
         </div>
       )

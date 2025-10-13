@@ -6,11 +6,12 @@ import Link from 'next/link'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import QRCode from 'qrcode'
 
-export default async function ViewPetPage({ params }: { params: { id: string } }) {
+export default async function ViewPetPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const profile = await db
     .select()
     .from(petProfiles)
-    .where(eq(petProfiles.id, parseInt(params.id)))
+    .where(eq(petProfiles.id, parseInt(id)))
     .limit(1)
 
   if (profile.length === 0) {

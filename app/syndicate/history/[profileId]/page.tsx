@@ -4,8 +4,9 @@ import { eq, desc } from 'drizzle-orm'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
-export default async function HistoryPage({ params }: { params: { profileId: string } }) {
-  const profileId = parseInt(params.profileId)
+export default async function HistoryPage({ params }: { params: Promise<{ profileId: string }> }) {
+  const { profileId: profileIdStr } = await params
+  const profileId = parseInt(profileIdStr)
 
   // Get pet profile
   const profile = await db

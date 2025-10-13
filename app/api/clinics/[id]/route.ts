@@ -18,7 +18,7 @@ function generatePassword() {
 // DELETE - Delete clinic
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -26,7 +26,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await db.delete(users).where(eq(users.id, parseInt(params.id)))
+    const { id } = await params
+    await db.delete(users).where(eq(users.id, parseInt(id)))
 
     return NextResponse.json({ success: true })
   } catch (error) {
@@ -38,7 +39,7 @@ export async function DELETE(
 // PATCH - Update clinic (block/unblock, reset password)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -46,16 +47,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const { action } = body
 
     if (action === 'block') {
-      await db.update(users).set({ status: 'blocked' }).where(eq(users.id, parseInt(params.id)))
+      await db.update(users).set({ status: 'blocked' }).where(eq(users.id, parseInt(id)))
       return NextResponse.json({ success: true })
     }
 
     if (action === 'unblock') {
-      await db.update(users).set({ status: 'active' }).where(eq(users.id, parseInt(params.id)))
+      await db.update(users).set({ status: 'active' }).where(eq(users.id, parseInt(id)))
       return NextResponse.json({ success: true })
     }
 
@@ -63,7 +65,7 @@ export async function PATCH(
       const newPassword = generatePassword()
       const hashedPassword = await bcrypt.hash(newPassword, 10)
       
-      await db.update(users).set({ password: hashedPassword }).where(eq(users.id, parseInt(params.id)))
+      await db.update(users).set({ password: hashedPassword }).where(eq(users.id, parseInt(id)))
       
       return NextResponse.json({ success: true, newPassword })
     }
