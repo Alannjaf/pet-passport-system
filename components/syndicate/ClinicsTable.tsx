@@ -27,11 +27,16 @@ export default function ClinicsTable({ clinics, allPets }: ClinicsTableProps) {
     )
   })
 
-  const handleViewPets = (clinic: User) => {
-    const pets = allPets.filter(pet => pet.lastEditedBy === clinic.id.toString())
-    setSelectedClinic(clinic)
-    setClinicPets(pets)
-    setShowPetsModal(true)
+  const handleViewPets = async (clinic: User) => {
+    // Fetch pets that this clinic has worked on
+    const response = await fetch(`/api/clinics/${clinic.id}/pets`)
+    const data = await response.json()
+    
+    if (data.success) {
+      setSelectedClinic(clinic)
+      setClinicPets(data.pets)
+      setShowPetsModal(true)
+    }
   }
 
   const handleEditPet = (petId: number) => {

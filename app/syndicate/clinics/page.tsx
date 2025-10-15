@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { users, petProfiles } from '@/lib/db/schema'
+import { users, petProfiles, petProfileVersions } from '@/lib/db/schema'
 import { desc, eq, sql } from 'drizzle-orm'
 import AddClinicButton from '@/components/syndicate/AddClinicButton'
 import ClinicsTable from '@/components/syndicate/ClinicsTable'
@@ -11,9 +11,29 @@ export default async function ClinicsPage() {
   // Fetch all pet profiles
   const allPets = await db.select().from(petProfiles)
   
+  // Fetch all pet profile versions to determine clinic associations
+  const allVersions = await db.select().from(petProfileVersions)
+  
   // Add pet count to each clinic
   const clinicsWithPetCount = clinics.map(clinic => {
-    const petCount = allPets.filter(pet => pet.lastEditedBy === clinic.id.toString()).length
+    // Find pets that this clinic has worked on (either created or edited)
+    const clinicPets = allPets.filter(pet => {
+      // Check if clinic last edited this pet
+      if (pet.lastEditedBy === clinic.id.toString()) {
+        return true
+      }
+      
+      // Check if clinic created or edited this pet (in version history)
+      const hasWorkedOnPet = allVersions.some(version => 
+        version.profileId === pet.id && 
+        version.editorId === clinic.id &&
+        version.editorRole === 'clinic'
+      )
+      
+      return hasWorkedOnPet
+    })
+    
+    const petCount = clinicPets.length
     return {
       ...clinic,
       petCount
