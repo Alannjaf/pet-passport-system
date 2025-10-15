@@ -1,18 +1,38 @@
 import Link from "next/link";
+import { auth } from "@/lib/auth/auth";
+import LogoutButton from "@/components/LogoutButton";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-blue-600">Pet Passport</h1>
         <div className="flex gap-4 items-center">
-          <Link
-            href="/login"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Login
-          </Link>
+          {session ? (
+            <>
+              <Link
+                href={
+                  session.user.role === "syndicate"
+                    ? "/syndicate/dashboard"
+                    : "/clinic/dashboard"
+                }
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                Go to Dashboard
+              </Link>
+              <LogoutButton />
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              Login
+            </Link>
+          )}
         </div>
       </header>
 
@@ -29,12 +49,25 @@ export default function Home() {
           manage pet health records, vaccinations, and digital passports.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
-          <Link
-            href="/login"
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-lg font-semibold"
-          >
-            Clinic Login
-          </Link>
+          {session ? (
+            <Link
+              href={
+                session.user.role === "syndicate"
+                  ? "/syndicate/dashboard"
+                  : "/clinic/dashboard"
+              }
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-lg font-semibold"
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-lg font-semibold"
+            >
+              Clinic Login
+            </Link>
+          )}
           <Link
             href="/scan"
             className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-lg font-semibold"
