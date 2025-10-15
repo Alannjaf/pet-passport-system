@@ -20,6 +20,25 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Input fields - ensure text is dark and visible */
+input,
+textarea,
+select {
+  color: #1f2937 !important; /* Dark gray text */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important; /* Lighter gray for placeholders */
+}
+
+/* Ensure input text is visible in all states */
+input:focus,
+textarea:focus,
+select:focus {
+  color: #111827 !important; /* Even darker when focused */
+}
+
 /* Utility classes */
 @layer utilities {
   .text-balance {
