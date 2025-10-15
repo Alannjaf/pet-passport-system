@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import jsPDF from 'jspdf'
 
 export default function AddClinicButton() {
   const router = useRouter()
@@ -42,6 +43,82 @@ export default function AddClinicButton() {
     setShowModal(false)
     setCredentials(null)
     router.refresh()
+  }
+
+  const handleDownloadPDF = () => {
+    if (!credentials) return
+
+    const doc = new jsPDF()
+    
+    // Set font
+    doc.setFontSize(20)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Pet Passport System', 105, 20, { align: 'center' })
+    
+    doc.setFontSize(16)
+    doc.text('Clinic Login Credentials', 105, 35, { align: 'center' })
+    
+    // Add horizontal line
+    doc.setLineWidth(0.5)
+    doc.line(20, 45, 190, 45)
+    
+    // Clinic information
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Clinic Details:', 20, 60)
+    
+    doc.setFont('helvetica', 'bold')
+    doc.text('Clinic Name:', 20, 75)
+    doc.setFont('helvetica', 'normal')
+    doc.text(clinicName, 60, 75)
+    
+    // Account credentials box
+    doc.setFillColor(240, 240, 240)
+    doc.roundedRect(20, 90, 170, 50, 3, 3, 'F')
+    
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Account Number:', 25, 105)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(14)
+    doc.text(credentials.accountNumber, 25, 115)
+    
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Password:', 25, 128)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(14)
+    doc.text(credentials.password, 25, 138)
+    
+    // Important notice
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(200, 0, 0)
+    doc.text('IMPORTANT NOTICE:', 20, 160)
+    
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(0, 0, 0)
+    doc.text('• Keep these credentials secure and confidential', 20, 170)
+    doc.text('• Share only with authorized clinic personnel', 20, 177)
+    doc.text('• This information will not be shown again', 20, 184)
+    doc.text('• Contact syndicate admin for password reset if needed', 20, 191)
+    
+    // Login URL
+    doc.setFont('helvetica', 'bold')
+    doc.text('Login URL:', 20, 205)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(0, 0, 255)
+    const loginUrl = window.location.origin + '/login'
+    doc.textWithLink(loginUrl, 50, 205, { url: loginUrl })
+    
+    // Footer
+    doc.setTextColor(100, 100, 100)
+    doc.setFontSize(9)
+    doc.text('Generated on: ' + new Date().toLocaleString(), 105, 280, { align: 'center' })
+    doc.text('Pet Passport System - Syndicate Administration', 105, 287, { align: 'center' })
+    
+    // Save the PDF
+    doc.save(`${clinicName.replace(/[^a-z0-9]/gi, '_')}_credentials.pdf`)
   }
 
   return (
@@ -121,12 +198,23 @@ export default function AddClinicButton() {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={handleClose}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                  Close
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={handleClose}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
+                  >
+                    Close
+                  </button>
+                </div>
               </>
             )}
           </div>
