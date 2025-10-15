@@ -70,6 +70,21 @@ export async function PATCH(
       return NextResponse.json({ success: true, newPassword })
     }
 
+    if (action === 'edit') {
+      const { clinicName, contactInfo } = body
+      
+      if (!clinicName || clinicName.trim() === '') {
+        return NextResponse.json({ error: 'Clinic name is required' }, { status: 400 })
+      }
+
+      await db.update(users).set({ 
+        clinicName: clinicName.trim(),
+        contactInfo: contactInfo?.trim() || null
+      }).where(eq(users.id, parseInt(id)))
+      
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error) {
     console.error('Error updating clinic:', error)

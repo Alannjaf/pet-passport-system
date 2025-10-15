@@ -8,7 +8,10 @@ export default function ClinicActions({ clinic }: { clinic: User }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [newPassword, setNewPassword] = useState('')
+  const [editClinicName, setEditClinicName] = useState(clinic.clinicName)
+  const [editContactInfo, setEditContactInfo] = useState(clinic.contactInfo || '')
 
   const handleBlock = async () => {
     if (!confirm(`Are you sure you want to ${clinic.status === 'active' ? 'block' : 'unblock'} this clinic?`)) {
@@ -82,9 +85,45 @@ export default function ClinicActions({ clinic }: { clinic: User }) {
     }
   }
 
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/clinics/${clinic.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'edit',
+          clinicName: editClinicName,
+          contactInfo: editContactInfo
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setShowEditModal(false)
+        router.refresh()
+      } else {
+        alert('Failed to update clinic')
+      }
+    } catch (error) {
+      alert('An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <>
       <div className="flex gap-2">
+        <button
+          onClick={() => setShowEditModal(true)}
+          disabled={loading}
+          className="px-3 py-1 bg-purple-100 text-purple-700 rounded text-sm font-medium hover:bg-purple-200 transition disabled:opacity-50"
+        >
+          Edit
+        </button>
         <button
           onClick={handleBlock}
           disabled={loading}
@@ -134,6 +173,61 @@ export default function ClinicActions({ clinic }: { clinic: User }) {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Edit Clinic</h2>
+            <form onSubmit={handleEdit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Clinic Name *
+                </label>
+                <input
+                  type="text"
+                  value={editClinicName}
+                  onChange={(e) => setEditClinicName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Information
+                </label>
+                <input
+                  type="text"
+                  value={editContactInfo}
+                  onChange={(e) => setEditContactInfo(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Phone, email, etc."
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setEditClinicName(clinic.clinicName)
+                    setEditContactInfo(clinic.contactInfo || '')
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
