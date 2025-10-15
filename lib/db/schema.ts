@@ -26,9 +26,19 @@ export const users = pgTable('users', {
   createdBy: text('created_by').notNull(),
 })
 
+// QR Code Batches Table
+export const qrCodeBatches = pgTable('qr_code_batches', {
+  id: serial('id').primaryKey(),
+  quantity: integer('quantity').notNull(),
+  generatedAt: timestamp('generated_at').defaultNow().notNull(),
+  generatedBy: text('generated_by').notNull(),
+  generatedByName: text('generated_by_name').notNull(),
+})
+
 // QR Codes Table
 export const qrCodes = pgTable('qr_codes', {
   id: serial('id').primaryKey(),
+  batchId: integer('batch_id'),
   qrCodeId: text('qr_code_id').notNull().unique(),
   status: qrStatusEnum('status').default('generated').notNull(),
   generatedAt: timestamp('generated_at').defaultNow().notNull(),
@@ -93,6 +103,8 @@ export type AdminUser = typeof adminUsers.$inferSelect
 export type NewAdminUser = typeof adminUsers.$inferInsert
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+export type QrCodeBatch = typeof qrCodeBatches.$inferSelect
+export type NewQrCodeBatch = typeof qrCodeBatches.$inferInsert
 export type QrCode = typeof qrCodes.$inferSelect
 export type NewQrCode = typeof qrCodes.$inferInsert
 export type PetProfile = typeof petProfiles.$inferSelect

@@ -46,6 +46,12 @@ export default async function SyndicateLayout({
                 >
                   QR Generator
                 </Link>
+                <Link
+                  href="/syndicate/qr-history"
+                  className="px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded transition"
+                >
+                  QR History
+                </Link>
               </div>
             </div>
             <div className="flex items-center gap-4">

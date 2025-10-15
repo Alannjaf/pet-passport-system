@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
 import { db } from '@/lib/db'
-import { qrCodes } from '@/lib/db/schema'
+import { qrCodes, qrCodeBatches } from '@/lib/db/schema'
 import { randomUUID } from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -18,11 +18,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid quantity' }, { status: 400 })
     }
 
+    // Create batch record
+    const batch = await db.insert(qrCodeBatches).values({
+      quantity,
+      generatedBy: session.user.id,
+      generatedByName: session.user.name || 'Syndicate Admin',
+    }).returning()
+
+    const batchId = batch[0].id
+
     // Generate QR codes
     const codes = []
     for (let i = 0; i < quantity; i++) {
       const qrCodeId = randomUUID()
       codes.push({
+        batchId,
         qrCodeId,
         status: 'generated' as const,
         generatedBy: 'syndicate',
@@ -34,6 +44,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      batchId,
       qrCodes: inserted,
     })
   } catch (error) {
