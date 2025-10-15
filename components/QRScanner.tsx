@@ -73,6 +73,14 @@ export default function QRScanner({ onScanSuccess, onScanError }: QRScannerProps
 
   return (
     <div className="w-full">
+      {/* QR Reader div - always rendered but hidden when not scanning */}
+      <div
+        id="qr-reader"
+        className={`w-full rounded-lg overflow-hidden ${
+          isScanning ? "border-4 border-green-500" : "hidden"
+        }`}
+      ></div>
+
       {!isScanning ? (
         <div className="text-center">
           <button
@@ -108,10 +116,6 @@ export default function QRScanner({ onScanSuccess, onScanError }: QRScannerProps
         </div>
       ) : (
         <div className="space-y-4">
-          <div
-            id="qr-reader"
-            className="w-full rounded-lg overflow-hidden border-4 border-green-500"
-          ></div>
           <button
             onClick={stopScanning}
             className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition font-semibold"
