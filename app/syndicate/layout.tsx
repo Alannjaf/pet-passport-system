@@ -1,18 +1,17 @@
-import { auth } from '@/lib/auth/auth'
-import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import LogoutButton from '@/components/LogoutButton'
-import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { auth } from "@/lib/auth/auth";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import LogoutButton from "@/components/LogoutButton";
 
 export default async function SyndicateLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const session = await auth()
+  const session = await auth();
 
-  if (!session || session.user.role !== 'syndicate') {
-    redirect('/login')
+  if (!session || session.user.role !== "syndicate") {
+    redirect("/login");
   }
 
   return (
@@ -22,7 +21,10 @@ export default async function SyndicateLayout({
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-8">
-              <Link href="/syndicate/dashboard" className="text-xl font-bold text-blue-600">
+              <Link
+                href="/syndicate/dashboard"
+                className="text-xl font-bold text-blue-600"
+              >
                 Pet Passport - Syndicate
               </Link>
               <div className="hidden md:flex gap-4">
@@ -47,7 +49,6 @@ export default async function SyndicateLayout({
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <LanguageSwitcher />
               <LogoutButton />
             </div>
           </div>
@@ -57,6 +58,5 @@ export default async function SyndicateLayout({
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">{children}</main>
     </div>
-  )
+  );
 }
-

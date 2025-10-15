@@ -11,12 +11,14 @@ Complete Pet Passport System with full functionality for three stakeholder types
 ### Added
 
 #### Core System
+
 - Next.js 14 application with App Router
 - TypeScript throughout the codebase
 - Tailwind CSS for styling
 - Responsive design for all screen sizes
 
 #### Authentication & Authorization
+
 - NextAuth.js v5 integration
 - Credentials-based authentication
 - Role-based access control (Syndicate, Clinic, Public)
@@ -25,6 +27,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - Protected routes via middleware
 
 #### Database
+
 - Neon PostgreSQL integration
 - Drizzle ORM for type-safe queries
 - Six main tables:
@@ -38,6 +41,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - Version control for all pet profile changes
 
 #### Syndicate Features
+
 - Dashboard with statistics
 - Clinic management (CRUD operations)
   - Create clinics with auto-generated credentials
@@ -51,6 +55,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - Access to all system features
 
 #### Clinic Features
+
 - Clinic-specific dashboard
 - Pet profile creation and editing
 - QR code scanning
@@ -60,6 +65,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - Version creation on every edit
 
 #### Pet Owner Features (Public)
+
 - QR code scanning (no login required)
 - Read-only pet profile view
 - Beautiful, card-based layout
@@ -68,6 +74,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - QR code regeneration for sharing
 
 #### Pet Profile System
+
 - Comprehensive pet information:
   - Basic info (name, species, breed, age, gender, color)
   - Owner details (name, phone, email, address)
@@ -80,17 +87,12 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - Auto-save to database
 - Version tracking
 
-#### Internationalization
-- Three language support:
-  - English (en) - LTR
-  - Arabic (ar) - RTL
-  - Kurdish Sorani (ckb) - RTL
-- Language switcher in header
-- Complete translations for all UI elements
-- RTL layout support for Arabic and Kurdish
-- Locale-based routing with next-intl
+#### Language
+
+- English language support
 
 #### QR Code System
+
 - UUID-based unique identifiers
 - Bulk generation capability
 - PDF export with grid layout
@@ -99,6 +101,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - Public scanning interface
 
 #### API Routes
+
 - `POST /api/clinics` - Create clinic
 - `PATCH /api/clinics/[id]` - Update clinic
 - `DELETE /api/clinics/[id]` - Delete clinic
@@ -108,8 +111,8 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - `GET/POST /api/auth/[...nextauth]` - Authentication
 
 #### UI Components
+
 - Reusable components:
-  - `LanguageSwitcher` - Multi-language selector
   - `LogoutButton` - Sign out functionality
   - `PetProfileForm` - Complex pet data form
   - `AddClinicButton` - Clinic creation modal
@@ -121,6 +124,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - Success/error feedback
 
 #### Security
+
 - CSRF protection
 - XSS prevention
 - SQL injection protection (parameterized queries)
@@ -129,6 +133,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - Input validation and sanitization
 
 #### Documentation
+
 - `README.md` - Project overview and quick start
 - `SETUP.md` - Detailed setup instructions
 - `DEPLOYMENT.md` - Production deployment guide
@@ -138,6 +143,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - TypeScript type definitions
 
 #### Developer Experience
+
 - ESLint configuration
 - TypeScript strict mode
 - Hot reload in development
@@ -148,6 +154,7 @@ Complete Pet Passport System with full functionality for three stakeholder types
 ### Technical Stack
 
 **Frontend:**
+
 - Next.js 14.x
 - React 19.x
 - TypeScript 5.x
@@ -155,21 +162,25 @@ Complete Pet Passport System with full functionality for three stakeholder types
 - next-intl 4.x
 
 **Backend:**
+
 - Next.js API Routes
 - NextAuth.js 5.x (beta)
 - Drizzle ORM 0.44.x
 
 **Database:**
+
 - Neon PostgreSQL (Serverless)
 - @neondatabase/serverless 1.x
 
 **Libraries:**
+
 - qrcode 1.x - QR generation
 - jsPDF 3.x - PDF export
 - bcryptjs 3.x - Password hashing
 - zod 4.x - Validation
 
 **Development:**
+
 - drizzle-kit 0.31.x
 - eslint 9.x
 - eslint-config-next 15.x
@@ -203,7 +214,6 @@ pet-passport-system/
 ├── components/
 │   ├── forms/
 │   ├── syndicate/
-│   ├── LanguageSwitcher.tsx
 │   └── LogoutButton.tsx
 ├── lib/
 │   ├── auth/
@@ -212,9 +222,7 @@ pet-passport-system/
 │       ├── index.ts
 │       └── schema.ts
 ├── messages/
-│   ├── en.json
-│   ├── ar.json
-│   └── ckb.json
+│   └── en.json
 ├── types/
 │   └── next-auth.d.ts
 ├── public/
@@ -273,8 +281,6 @@ This is the initial production-ready release. The system is fully functional and
 - [x] Pet profile creation saves all fields + version
 - [x] Editing creates new version, keeps history
 - [x] Pet owner sees read-only view
-- [x] All 3 languages display correctly
-- [x] RTL works for Arabic/Kurdish
 - [x] Password reset by syndicate works
 - [x] Blocked clinics cannot login
 - [x] Image upload converts to base64
@@ -296,4 +302,3 @@ This is the initial production-ready release. The system is fully functional and
 ---
 
 **Built with ❤️ for pet health management**
-

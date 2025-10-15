@@ -44,11 +44,13 @@ ADMIN_PASSWORD=YourSecurePassword123
 Run this command to generate a secure secret:
 
 **Linux/Mac:**
+
 ```bash
 openssl rand -base64 32
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
@@ -113,10 +115,12 @@ Open http://localhost:3000 in your browser.
 ## Default Logins
 
 ### Syndicate (Admin)
+
 - **Account Number**: Value of `ADMIN_USERNAME` in `.env.local`
 - **Password**: Value of `ADMIN_PASSWORD` in `.env.local`
 
 ### Clinics
+
 - Created by Syndicate
 - Account numbers follow format: `CLN-XXXXX`
 - Passwords are randomly generated
@@ -171,14 +175,9 @@ To start fresh (WARNING: This deletes all data):
 npm run db:push
 ```
 
-## Languages
+## Language
 
-The system supports three languages out of the box:
-- English (en)
-- Arabic (ar)
-- Kurdish Sorani (ckb)
-
-Switch languages using the language selector in the header.
+The system is available in English only.
 
 ## Production Deployment
 
@@ -187,6 +186,7 @@ See README.md for Vercel deployment instructions.
 ## Support
 
 For issues or questions:
+
 1. Check this setup guide
 2. Review the README.md file
 3. Check the code comments in key files
@@ -198,4 +198,3 @@ For issues or questions:
 - `app/api/*` - API routes
 - `messages/*.json` - Translation files
 - `components/*` - Reusable components
-

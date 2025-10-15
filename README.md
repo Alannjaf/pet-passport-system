@@ -5,6 +5,7 @@ A comprehensive pet health management and digital passport solution built with N
 ## Features
 
 ### For Syndicate (Admin)
+
 - Create and manage clinic accounts
 - Generate bulk QR codes for pet passports
 - View complete version history of all pet profiles
@@ -12,12 +13,14 @@ A comprehensive pet health management and digital passport solution built with N
 - Reset clinic passwords
 
 ### For Clinics
+
 - Create and edit pet profiles
 - Track vaccinations and medical history
 - View all pets they've worked with
 - Upload pet photos
 
 ### For Pet Owners
+
 - View pet profiles by scanning QR codes
 - See vaccination history and medical records
 - Access pet information anytime, anywhere
@@ -29,7 +32,6 @@ A comprehensive pet health management and digital passport solution built with N
 - **ORM**: Drizzle ORM
 - **Authentication**: NextAuth.js v5
 - **Styling**: Tailwind CSS
-- **i18n**: next-intl (English, Arabic, Kurdish Sorani)
 - **QR Codes**: qrcode, html5-qrcode
 - **PDF Generation**: jsPDF
 
@@ -99,6 +101,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## User Roles & Workflows
 
 ### Syndicate Workflow
+
 1. Login with admin credentials (set in .env.local)
 2. Add clinic accounts (system generates account number and password)
 3. Generate QR codes in bulk
@@ -106,6 +109,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 5. Monitor all pet profiles and version history
 
 ### Clinic Workflow
+
 1. Login with account number and password provided by syndicate
 2. Scan QR code to create or edit pet profile
 3. Fill in pet information, vaccinations, medical history
@@ -113,23 +117,20 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 5. Save profile (creates new version)
 
 ### Pet Owner Workflow
+
 1. Scan QR code on pet's passport
 2. View pet profile with all information
 3. See vaccination status and medical history
 4. Download/share QR code
 
-## Internationalization
+## Language
 
-The system supports three languages:
-- English (en)
-- Arabic (ar) - RTL support
-- Kurdish Sorani (ckb) - RTL support
-
-Language can be switched using the language selector in the header.
+The system is available in English only.
 
 ## Version History
 
 Every edit to a pet profile creates a new version that includes:
+
 - Version number
 - Editor name and role
 - Timestamp
@@ -160,6 +161,7 @@ The syndicate can view all versions, while clinics and owners only see the curre
 ### Environment Variables (Production)
 
 Make sure to set all environment variables in your Vercel project settings:
+
 - DATABASE_URL
 - NEXTAUTH_SECRET
 - NEXTAUTH_URL (your production URL)
@@ -189,4 +191,3 @@ ISC
 ## Support
 
 For password reset or account issues, clinics should contact the syndicate administrator.
-

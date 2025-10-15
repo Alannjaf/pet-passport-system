@@ -1,36 +1,31 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function ScanEntryPage() {
-  const router = useRouter()
-  const [qrInput, setQrInput] = useState('')
+  const router = useRouter();
+  const [qrInput, setQrInput] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (qrInput.trim()) {
       // Extract QR code ID from URL or use as-is
-      let qrCodeId = qrInput.trim()
-      
+      let qrCodeId = qrInput.trim();
+
       // If it's a URL, extract the ID
-      if (qrCodeId.includes('/scan/')) {
-        const parts = qrCodeId.split('/scan/')
-        qrCodeId = parts[1].split('?')[0]
+      if (qrCodeId.includes("/scan/")) {
+        const parts = qrCodeId.split("/scan/");
+        qrCodeId = parts[1].split("?")[0];
       }
-      
-      router.push(`/scan/${qrCodeId}`)
+
+      router.push(`/scan/${qrCodeId}`);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="absolute top-4 right-4">
-        <LanguageSwitcher />
-      </div>
-
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
@@ -42,11 +37,23 @@ export default function ScanEntryPage() {
         <div className="bg-white rounded-xl shadow-xl p-8">
           <div className="mb-6 text-center">
             <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              <svg
+                className="w-12 h-12 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Enter QR Code</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Enter QR Code
+            </h2>
             <p className="text-gray-600 text-sm">
               Enter the QR code ID or paste the full URL
             </p>
@@ -84,6 +91,5 @@ export default function ScanEntryPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

@@ -1,50 +1,45 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [accountNumber, setAccountNumber] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [accountNumber, setAccountNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         accountNumber,
         password,
         redirect: false,
-      })
+      });
 
       if (result?.error) {
-        setError('Invalid account number or password')
-        setLoading(false)
-        return
+        setError("Invalid account number or password");
+        setLoading(false);
+        return;
       }
 
       // Redirect based on role - we'll fetch the session to determine role
-      window.location.href = '/dashboard'
+      window.location.href = "/dashboard";
     } catch (err) {
-      setError('An error occurred. Please try again.')
-      setLoading(false)
+      setError("An error occurred. Please try again.");
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="absolute top-4 right-4">
-        <LanguageSwitcher />
-      </div>
-
       <div className="max-w-md w-full">
         {/* Logo/Header */}
         <div className="text-center mb-8">
@@ -64,7 +59,10 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label htmlFor="accountNumber" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="accountNumber"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Account Number
               </label>
               <input
@@ -79,7 +77,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Password
               </label>
               <input
@@ -98,7 +99,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
@@ -114,6 +115,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
