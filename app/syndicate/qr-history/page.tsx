@@ -1,27 +1,32 @@
-import { db } from '@/lib/db'
-import { qrCodeBatches, qrCodes } from '@/lib/db/schema'
-import { desc, eq, sql } from 'drizzle-orm'
-import QRHistoryTable from '@/components/syndicate/QRHistoryTable'
+import { db } from "@/lib/db";
+import { qrCodeBatches, qrCodes } from "@/lib/db/schema";
+import { desc, eq, sql } from "drizzle-orm";
+import QRHistoryTable from "@/components/syndicate/QRHistoryTable";
 
 export default async function QRHistoryPage() {
   // Fetch all batches with counts of used/unused QR codes
-  const batches = await db.select().from(qrCodeBatches).orderBy(desc(qrCodeBatches.generatedAt))
-  
+  const batches = await db
+    .select()
+    .from(qrCodeBatches)
+    .orderBy(desc(qrCodeBatches.generatedAt));
+
   // Fetch all QR codes to calculate used/unused
-  const allQRCodes = await db.select().from(qrCodes)
-  
+  const allQRCodes = await db.select().from(qrCodes);
+
   // Add usage stats to each batch
-  const batchesWithStats = batches.map(batch => {
-    const batchCodes = allQRCodes.filter(code => code.batchId === batch.id)
-    const used = batchCodes.filter(code => code.status === 'filled').length
-    const unused = batchCodes.filter(code => code.status === 'generated').length
-    
+  const batchesWithStats = batches.map((batch) => {
+    const batchCodes = allQRCodes.filter((code) => code.batchId === batch.id);
+    const used = batchCodes.filter((code) => code.status === "filled").length;
+    const unused = batchCodes.filter(
+      (code) => code.status === "generated"
+    ).length;
+
     return {
       ...batch,
       used,
       unused,
-    }
-  })
+    };
+  });
 
   return (
     <div>
@@ -34,6 +39,5 @@ export default async function QRHistoryPage() {
 
       <QRHistoryTable batches={batchesWithStats} />
     </div>
-  )
+  );
 }
-
