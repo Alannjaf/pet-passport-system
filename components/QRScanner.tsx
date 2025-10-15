@@ -29,6 +29,8 @@ export default function QRScanner({ onScanSuccess, onScanError }: QRScannerProps
   const startScanning = async () => {
     try {
       setError("");
+      setIsScanning(true); // Set this first to show the qr-reader div
+      
       const scanner = new Html5Qrcode("qr-reader");
       scannerRef.current = scanner;
 
@@ -49,11 +51,10 @@ export default function QRScanner({ onScanSuccess, onScanError }: QRScannerProps
           // So we don't show these errors
         }
       );
-
-      setIsScanning(true);
     } catch (err: any) {
-      const errorMsg = err.message || "Failed to start camera";
+      const errorMsg = err.message || "Failed to start camera. Please grant camera permissions or use the image upload option.";
       setError(errorMsg);
+      setIsScanning(false);
       if (onScanError) {
         onScanError(errorMsg);
       }
