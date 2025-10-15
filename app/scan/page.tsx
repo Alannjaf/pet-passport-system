@@ -3,24 +3,30 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import QRScanner from "@/components/QRScanner";
 
 export default function ScanEntryPage() {
   const router = useRouter();
   const [qrInput, setQrInput] = useState("");
+  const [showManualInput, setShowManualInput] = useState(false);
+
+  const handleQRScan = (decodedText: string) => {
+    // Extract QR code ID from URL or use as-is
+    let qrCodeId = decodedText.trim();
+
+    // If it's a URL, extract the ID
+    if (qrCodeId.includes("/scan/")) {
+      const parts = qrCodeId.split("/scan/");
+      qrCodeId = parts[1].split("?")[0];
+    }
+
+    router.push(`/scan/${qrCodeId}`);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (qrInput.trim()) {
-      // Extract QR code ID from URL or use as-is
-      let qrCodeId = qrInput.trim();
-
-      // If it's a URL, extract the ID
-      if (qrCodeId.includes("/scan/")) {
-        const parts = qrCodeId.split("/scan/");
-        qrCodeId = parts[1].split("?")[0];
-      }
-
-      router.push(`/scan/${qrCodeId}`);
+      handleQRScan(qrInput);
     }
   };
 
@@ -52,36 +58,62 @@ export default function ScanEntryPage() {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Enter QR Code
+              Scan QR Code
             </h2>
             <p className="text-gray-600 text-sm">
-              Enter the QR code ID or paste the full URL
+              Use your camera to scan the pet passport QR code
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <input
-                type="text"
-                value={qrInput}
-                onChange={(e) => setQrInput(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter QR code or URL"
-                required
-              />
-            </div>
+          {!showManualInput ? (
+            <>
+              <QRScanner onScanSuccess={handleQRScan} />
 
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
-            >
-              Continue
-            </button>
-          </form>
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setShowManualInput(true)}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  Or enter QR code manually →
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    QR Code ID or URL
+                  </label>
+                  <input
+                    type="text"
+                    value={qrInput}
+                    onChange={(e) => setQrInput(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter QR code or URL"
+                    required
+                    autoFocus
+                  />
+                </div>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Or use your camera to scan the QR code</p>
-          </div>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-semibold"
+                >
+                  Continue
+                </button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => setShowManualInput(false)}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  ← Back to camera scanner
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="mt-6 text-center">
