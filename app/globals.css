@@ -25,6 +25,30 @@ input,
 textarea,
 select {
   color: #1f2937 !important; /* Dark gray text */
+  background-color: #ffffff !important; /* White background */
+  -webkit-appearance: none; /* Remove default styling on iOS */
+  appearance: none;
+}
+
+/* Date inputs specific styling for mobile */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 42px; /* Better touch target on mobile */
+}
+
+/* Fix date input display on iOS and Android */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  background: transparent;
+  color: #1f2937;
+  cursor: pointer;
+  opacity: 1;
 }
 
 input::placeholder,
@@ -37,12 +61,39 @@ input:focus,
 textarea:focus,
 select:focus {
   color: #111827 !important; /* Even darker when focused */
+  background-color: #ffffff !important;
+}
+
+/* Disabled inputs should still be visible */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
+  opacity: 1;
 }
 
 /* Utility classes */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  /* Better touch targets on mobile */
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    min-height: 44px; /* Apple's recommended touch target size */
+  }
+  
+  /* Ensure proper spacing on mobile forms */
+  .grid {
+    gap: 1rem !important;
   }
 }
 
