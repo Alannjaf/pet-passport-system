@@ -65,6 +65,41 @@ export default function PetProfileForm({
   const [existingParasiteCount, setExistingParasiteCount] = useState(0);
   const [existingOtherCount, setExistingOtherCount] = useState(0);
 
+  // Track which records are expanded (default: expand all)
+  const [expandedRabies, setExpandedRabies] = useState<Set<number>>(new Set());
+  const [expandedParasite, setExpandedParasite] = useState<Set<number>>(new Set());
+  const [expandedOther, setExpandedOther] = useState<Set<number>>(new Set());
+
+  const toggleRabiesExpanded = (index: number) => {
+    const newExpanded = new Set(expandedRabies);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedRabies(newExpanded);
+  };
+
+  const toggleParasiteExpanded = (index: number) => {
+    const newExpanded = new Set(expandedParasite);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedParasite(newExpanded);
+  };
+
+  const toggleOtherExpanded = (index: number) => {
+    const newExpanded = new Set(expandedOther);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedOther(newExpanded);
+  };
+
   // Section 1: Details of Ownership
   const [ownerName, setOwnerName] = useState(existingProfile?.ownerName || "");
   const [ownerAddress, setOwnerAddress] = useState(
@@ -934,33 +969,83 @@ export default function PetProfileForm({
         {rabiesVaccinations.map((vax, index) => {
           const isExistingRecord = index < existingRabiesCount;
           const isRecordLocked = isExistingRecord && isClinic;
+          const isExpanded = expandedRabies.has(index);
 
           return (
             <div
               key={index}
-              className={`mb-4 p-4 border rounded-lg ${
+              className={`mb-4 border rounded-lg ${
                 isRecordLocked
                   ? "border-amber-200 bg-amber-50"
                   : "border-gray-200 bg-gray-50"
               }`}
             >
-              {isRecordLocked && (
-                <div className="mb-3 flex items-center text-sm text-amber-700">
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+              {/* Collapsible Header */}
+              <div
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-100/50"
+                onClick={() => toggleRabiesExpanded(index)}
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <button
+                    type="button"
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleRabiesExpanded(index);
+                    }}
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Existing record - locked for clinics
+                    <svg
+                      className={`w-5 h-5 transform transition-transform ${
+                        isExpanded ? "rotate-90" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      Rabies Vaccination #{index + 1}
+                      {vax.vaccineName && ` - ${vax.vaccineName}`}
+                    </div>
+                    {!isExpanded && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        {vax.vaccinationDate && `Date: ${vax.vaccinationDate}`}
+                        {vax.validUntil && ` • Valid Until: ${vax.validUntil}`}
+                        {!vax.vaccinationDate && !vax.validUntil && "Click to expand"}
+                      </div>
+                    )}
+                  </div>
+                  {isRecordLocked && (
+                    <div className="flex items-center text-sm text-amber-700">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Locked
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="grid md:grid-cols-2 gap-4 mb-3">
+              </div>
+
+              {/* Collapsible Content */}
+              {isExpanded && (
+                <div className="px-4 pb-4 border-t border-gray-200">
+                  <div className="grid md:grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Manufacturer
@@ -1101,15 +1186,18 @@ export default function PetProfileForm({
                     disabled={isRecordLocked}
                   />
                 </div>
+                {rabiesVaccinations.length > 1 && !isRecordLocked && (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => removeRabiesVaccination(index)}
+                      className="text-red-600 text-sm hover:text-red-700 font-medium"
+                    >
+                      Remove Entry
+                    </button>
+                  </div>
+                )}
               </div>
-              {rabiesVaccinations.length > 1 && !isRecordLocked && (
-                <button
-                  type="button"
-                  onClick={() => removeRabiesVaccination(index)}
-                  className="text-red-600 text-sm hover:text-red-700 font-medium"
-                >
-                  Remove Entry
-                </button>
               )}
             </div>
           );
@@ -1134,33 +1222,83 @@ export default function PetProfileForm({
         {parasiteTreatments.map((treatment, index) => {
           const isExistingRecord = index < existingParasiteCount;
           const isRecordLocked = isExistingRecord && isClinic;
+          const isExpanded = expandedParasite.has(index);
 
           return (
             <div
               key={index}
-              className={`mb-4 p-4 border rounded-lg ${
+              className={`mb-4 border rounded-lg ${
                 isRecordLocked
                   ? "border-amber-200 bg-amber-50"
                   : "border-gray-200 bg-gray-50"
               }`}
             >
-              {isRecordLocked && (
-                <div className="mb-3 flex items-center text-sm text-amber-700">
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+              {/* Collapsible Header */}
+              <div
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-100/50"
+                onClick={() => toggleParasiteExpanded(index)}
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <button
+                    type="button"
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleParasiteExpanded(index);
+                    }}
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Existing record - locked for clinics
+                    <svg
+                      className={`w-5 h-5 transform transition-transform ${
+                        isExpanded ? "rotate-90" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      Parasite Treatment #{index + 1}
+                      {treatment.productName && ` - ${treatment.productName}`}
+                    </div>
+                    {!isExpanded && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        {treatment.treatmentDate && `Date: ${treatment.treatmentDate}`}
+                        {treatment.validUntil && ` • Valid Until: ${treatment.validUntil}`}
+                        {!treatment.treatmentDate && !treatment.validUntil && "Click to expand"}
+                      </div>
+                    )}
+                  </div>
+                  {isRecordLocked && (
+                    <div className="flex items-center text-sm text-amber-700">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Locked
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="grid md:grid-cols-2 gap-4 mb-3">
+              </div>
+
+              {/* Collapsible Content */}
+              {isExpanded && (
+                <div className="px-4 pb-4 border-t border-gray-200">
+                  <div className="grid md:grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Manufacturer
@@ -1265,15 +1403,18 @@ export default function PetProfileForm({
                     disabled={isRecordLocked}
                   />
                 </div>
+                {parasiteTreatments.length > 1 && !isRecordLocked && (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => removeParasiteTreatment(index)}
+                      className="text-red-600 text-sm hover:text-red-700 font-medium"
+                    >
+                      Remove Entry
+                    </button>
+                  </div>
+                )}
               </div>
-              {parasiteTreatments.length > 1 && !isRecordLocked && (
-                <button
-                  type="button"
-                  onClick={() => removeParasiteTreatment(index)}
-                  className="text-red-600 text-sm hover:text-red-700 font-medium"
-                >
-                  Remove Entry
-                </button>
               )}
             </div>
           );
@@ -1298,33 +1439,83 @@ export default function PetProfileForm({
         {otherTreatments.map((treatment, index) => {
           const isExistingRecord = index < existingOtherCount;
           const isRecordLocked = isExistingRecord && isClinic;
+          const isExpanded = expandedOther.has(index);
 
           return (
             <div
               key={index}
-              className={`mb-4 p-4 border rounded-lg ${
+              className={`mb-4 border rounded-lg ${
                 isRecordLocked
                   ? "border-amber-200 bg-amber-50"
                   : "border-gray-200 bg-gray-50"
               }`}
             >
-              {isRecordLocked && (
-                <div className="mb-3 flex items-center text-sm text-amber-700">
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+              {/* Collapsible Header */}
+              <div
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-100/50"
+                onClick={() => toggleOtherExpanded(index)}
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <button
+                    type="button"
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleOtherExpanded(index);
+                    }}
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Existing record - locked for clinics
+                    <svg
+                      className={`w-5 h-5 transform transition-transform ${
+                        isExpanded ? "rotate-90" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      Other Treatment #{index + 1}
+                      {treatment.vaccineName && ` - ${treatment.vaccineName}`}
+                    </div>
+                    {!isExpanded && (
+                      <div className="text-sm text-gray-600 mt-1">
+                        {treatment.vaccinationDate && `Date: ${treatment.vaccinationDate}`}
+                        {treatment.validUntil && ` • Valid Until: ${treatment.validUntil}`}
+                        {!treatment.vaccinationDate && !treatment.validUntil && "Click to expand"}
+                      </div>
+                    )}
+                  </div>
+                  {isRecordLocked && (
+                    <div className="flex items-center text-sm text-amber-700">
+                      <svg
+                        className="w-4 h-4 mr-1"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Locked
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="grid md:grid-cols-2 gap-4 mb-3">
+              </div>
+
+              {/* Collapsible Content */}
+              {isExpanded && (
+                <div className="px-4 pb-4 border-t border-gray-200">
+                  <div className="grid md:grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Manufacturer
@@ -1435,15 +1626,18 @@ export default function PetProfileForm({
                     disabled={isRecordLocked}
                   />
                 </div>
+                {otherTreatments.length > 1 && !isRecordLocked && (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => removeOtherTreatment(index)}
+                      className="text-red-600 text-sm hover:text-red-700 font-medium"
+                    >
+                      Remove Entry
+                    </button>
+                  </div>
+                )}
               </div>
-              {otherTreatments.length > 1 && !isRecordLocked && (
-                <button
-                  type="button"
-                  onClick={() => removeOtherTreatment(index)}
-                  className="text-red-600 text-sm hover:text-red-700 font-medium"
-                >
-                  Remove Entry
-                </button>
               )}
             </div>
           );
