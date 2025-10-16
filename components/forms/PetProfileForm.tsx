@@ -1197,11 +1197,12 @@ export default function PetProfileForm({
                     </button>
                   </div>
                 )}
+                </div>
               </div>
-              )}
-            </div>
-          );
-        })}
+            )}
+          </div>
+        );
+      })}
         <button
           type="button"
           onClick={addRabiesVaccination}
@@ -1414,11 +1415,12 @@ export default function PetProfileForm({
                     </button>
                   </div>
                 )}
+                </div>
               </div>
-              )}
-            </div>
-          );
-        })}
+            )}
+          </div>
+        );
+      })}
         <button
           type="button"
           onClick={addParasiteTreatment}
@@ -1637,11 +1639,12 @@ export default function PetProfileForm({
                     </button>
                   </div>
                 )}
+                </div>
               </div>
-              )}
-            </div>
-          );
-        })}
+            )}
+          </div>
+        );
+      })}
         <button
           type="button"
           onClick={addOtherTreatment}
