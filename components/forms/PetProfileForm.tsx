@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PetProfile } from "@/lib/db/schema";
 
@@ -37,17 +37,33 @@ interface OtherTreatment {
 interface PetProfileFormProps {
   qrCodeId: string;
   existingProfile?: PetProfile;
+  existingRabiesVaccinations?: any[];
+  existingParasiteTreatments?: any[];
+  existingOtherTreatments?: any[];
   session: any;
 }
 
 export default function PetProfileForm({
   qrCodeId,
   existingProfile,
+  existingRabiesVaccinations,
+  existingParasiteTreatments,
+  existingOtherTreatments,
   session,
 }: PetProfileFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showTattoo, setShowTattoo] = useState(!!existingProfile?.tattooCode);
+
+  // Check if passport sections are locked
+  const isLocked = existingProfile?.passportSectionsLocked === "true";
+  const isClinic = session.user.role === "clinic";
+  const areSectionsDisabled = isLocked && isClinic;
+
+  // Track how many existing records there are (these are read-only for clinics)
+  const [existingRabiesCount, setExistingRabiesCount] = useState(0);
+  const [existingParasiteCount, setExistingParasiteCount] = useState(0);
+  const [existingOtherCount, setExistingOtherCount] = useState(0);
 
   // Section 1: Details of Ownership
   const [ownerName, setOwnerName] = useState(existingProfile?.ownerName || "");
@@ -58,7 +74,9 @@ export default function PetProfileForm({
   const [ownerCountry, setOwnerCountry] = useState(
     existingProfile?.ownerCountry || ""
   );
-  const [ownerPhone, setOwnerPhone] = useState(existingProfile?.ownerPhone || "");
+  const [ownerPhone, setOwnerPhone] = useState(
+    existingProfile?.ownerPhone || ""
+  );
 
   // Section 2: Description of Animal
   const [petName, setPetName] = useState(existingProfile?.petName || "");
@@ -83,7 +101,9 @@ export default function PetProfileForm({
   const [transponderLocation, setTransponderLocation] = useState(
     existingProfile?.transponderLocation || ""
   );
-  const [tattooCode, setTattooCode] = useState(existingProfile?.tattooCode || "");
+  const [tattooCode, setTattooCode] = useState(
+    existingProfile?.tattooCode || ""
+  );
   const [tattooAppliedDate, setTattooAppliedDate] = useState(
     existingProfile?.tattooAppliedDate || ""
   );
@@ -128,6 +148,55 @@ export default function PetProfileForm({
       authorizedVeterinarian: "",
       notes: "",
     },
+  ]);
+
+  // Load existing treatments on component mount
+  useEffect(() => {
+    if (existingRabiesVaccinations && existingRabiesVaccinations.length > 0) {
+      const loadedRabies = existingRabiesVaccinations.map((r) => ({
+        manufacturer: r.manufacturer || "",
+        vaccineName: r.vaccineName || "",
+        batchNumber: r.batchNumber || "",
+        vaccinationDate: r.vaccinationDate || "",
+        validFrom: r.validFrom || "",
+        validUntil: r.validUntil || "",
+        authorizedVeterinarian: r.authorizedVeterinarian || "",
+        notes: r.notes || "",
+      }));
+      setRabiesVaccinations(loadedRabies);
+      setExistingRabiesCount(loadedRabies.length);
+    }
+
+    if (existingParasiteTreatments && existingParasiteTreatments.length > 0) {
+      const loadedParasite = existingParasiteTreatments.map((p) => ({
+        manufacturer: p.manufacturer || "",
+        productName: p.productName || "",
+        treatmentDate: p.treatmentDate || "",
+        validUntil: p.validUntil || "",
+        authorizedVeterinarian: p.authorizedVeterinarian || "",
+        notes: p.notes || "",
+      }));
+      setParasiteTreatments(loadedParasite);
+      setExistingParasiteCount(loadedParasite.length);
+    }
+
+    if (existingOtherTreatments && existingOtherTreatments.length > 0) {
+      const loadedOther = existingOtherTreatments.map((o) => ({
+        manufacturer: o.manufacturer || "",
+        vaccineName: o.vaccineName || "",
+        batchNumber: o.batchNumber || "",
+        vaccinationDate: o.vaccinationDate || "",
+        validUntil: o.validUntil || "",
+        authorizedVeterinarian: o.authorizedVeterinarian || "",
+        notes: o.notes || "",
+      }));
+      setOtherTreatments(loadedOther);
+      setExistingOtherCount(loadedOther.length);
+    }
+  }, [
+    existingRabiesVaccinations,
+    existingParasiteTreatments,
+    existingOtherTreatments,
   ]);
 
   // Section 6: Parasites
@@ -365,6 +434,34 @@ export default function PetProfileForm({
         <p className="text-gray-600 mt-2">
           Complete all sections according to official passport requirements
         </p>
+        {areSectionsDisabled && (
+          <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start">
+              <svg
+                className="w-5 h-5 text-amber-600 mt-0.5 mr-2"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <div>
+                <h3 className="font-semibold text-amber-900">
+                  Passport Sections Locked
+                </h3>
+                <p className="text-sm text-amber-800 mt-1">
+                  The Owner Details, Description of Animal, Marking, and Issuing
+                  of Passport sections are locked. Only the syndicate can modify
+                  these fields. You can still edit medical information and add
+                  new treatments/vaccinations.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Section 1: Details of Ownership */}
@@ -374,6 +471,22 @@ export default function PetProfileForm({
             I
           </span>
           Details of Ownership
+          {areSectionsDisabled && (
+            <span className="ml-3 text-sm font-normal text-amber-600 flex items-center">
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Locked
+            </span>
+          )}
         </h2>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
@@ -384,8 +497,9 @@ export default function PetProfileForm({
               type="text"
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
               required
+              disabled={areSectionsDisabled}
             />
           </div>
           <div className="md:col-span-2">
@@ -396,8 +510,9 @@ export default function PetProfileForm({
               type="text"
               value={ownerAddress}
               onChange={(e) => setOwnerAddress(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
               required
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -408,7 +523,8 @@ export default function PetProfileForm({
               type="text"
               value={ownerCity}
               onChange={(e) => setOwnerCity(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -419,7 +535,8 @@ export default function PetProfileForm({
               type="text"
               value={ownerCountry}
               onChange={(e) => setOwnerCountry(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -430,8 +547,9 @@ export default function PetProfileForm({
               type="tel"
               value={ownerPhone}
               onChange={(e) => setOwnerPhone(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
               required
+              disabled={areSectionsDisabled}
             />
           </div>
         </div>
@@ -444,6 +562,22 @@ export default function PetProfileForm({
             II
           </span>
           Description of Animal
+          {areSectionsDisabled && (
+            <span className="ml-3 text-sm font-normal text-amber-600 flex items-center">
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Locked
+            </span>
+          )}
         </h2>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
@@ -454,8 +588,9 @@ export default function PetProfileForm({
               type="text"
               value={petName}
               onChange={(e) => setPetName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
               required
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -465,8 +600,9 @@ export default function PetProfileForm({
             <select
               value={species}
               onChange={(e) => setSpecies(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
               required
+              disabled={areSectionsDisabled}
             >
               <option value="">Select species</option>
               <option value="Dog">Dog</option>
@@ -485,7 +621,8 @@ export default function PetProfileForm({
               type="text"
               value={breed}
               onChange={(e) => setBreed(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -495,7 +632,8 @@ export default function PetProfileForm({
             <select
               value={gender}
               onChange={(e) => setGender(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             >
               <option value="">Select sex</option>
               <option value="Male">Male</option>
@@ -510,7 +648,8 @@ export default function PetProfileForm({
               type="date"
               value={dateOfBirth}
               onChange={(e) => setDateOfBirth(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -521,7 +660,8 @@ export default function PetProfileForm({
               type="text"
               value={color}
               onChange={(e) => setColor(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div className="md:col-span-2">
@@ -531,9 +671,10 @@ export default function PetProfileForm({
             <textarea
               value={notableFeatures}
               onChange={(e) => setNotableFeatures(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
               rows={2}
               placeholder="Any distinguishing marks, scars, or features"
+              disabled={areSectionsDisabled}
             />
           </div>
         </div>
@@ -546,6 +687,22 @@ export default function PetProfileForm({
             III
           </span>
           Marking of the Animal
+          {areSectionsDisabled && (
+            <span className="ml-3 text-sm font-normal text-amber-600 flex items-center">
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Locked
+            </span>
+          )}
         </h2>
 
         {/* Transponder (Microchip) */}
@@ -562,8 +719,9 @@ export default function PetProfileForm({
                 type="text"
                 value={transponderCode}
                 onChange={(e) => setTransponderCode(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
                 placeholder="15-digit code"
+                disabled={areSectionsDisabled}
               />
             </div>
             <div>
@@ -574,7 +732,8 @@ export default function PetProfileForm({
                 type="date"
                 value={transponderAppliedDate}
                 onChange={(e) => setTransponderAppliedDate(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                disabled={areSectionsDisabled}
               />
             </div>
             <div>
@@ -585,8 +744,9 @@ export default function PetProfileForm({
                 type="text"
                 value={transponderLocation}
                 onChange={(e) => setTransponderLocation(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
                 placeholder="e.g., Left shoulder"
+                disabled={areSectionsDisabled}
               />
             </div>
           </div>
@@ -595,11 +755,14 @@ export default function PetProfileForm({
         {/* Tattoo (Optional) */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-800">B. Tattoo (Optional)</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              B. Tattoo (Optional)
+            </h3>
             <button
               type="button"
               onClick={() => setShowTattoo(!showTattoo)}
-              className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition"
+              className="px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             >
               {showTattoo ? "Hide" : "Show"} Tattoo Section
             </button>
@@ -614,7 +777,8 @@ export default function PetProfileForm({
                   type="text"
                   value={tattooCode}
                   onChange={(e) => setTattooCode(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                  disabled={areSectionsDisabled}
                 />
               </div>
               <div>
@@ -625,7 +789,8 @@ export default function PetProfileForm({
                   type="date"
                   value={tattooAppliedDate}
                   onChange={(e) => setTattooAppliedDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                  disabled={areSectionsDisabled}
                 />
               </div>
               <div>
@@ -636,8 +801,9 @@ export default function PetProfileForm({
                   type="text"
                   value={tattooLocation}
                   onChange={(e) => setTattooLocation(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
                   placeholder="e.g., Right ear"
+                  disabled={areSectionsDisabled}
                 />
               </div>
             </div>
@@ -652,6 +818,22 @@ export default function PetProfileForm({
             IV
           </span>
           Issuing of the Passport
+          {areSectionsDisabled && (
+            <span className="ml-3 text-sm font-normal text-amber-600 flex items-center">
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Locked
+            </span>
+          )}
         </h2>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
@@ -662,7 +844,8 @@ export default function PetProfileForm({
               type="text"
               value={issuingVetName}
               onChange={(e) => setIssuingVetName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div className="md:col-span-2">
@@ -673,7 +856,8 @@ export default function PetProfileForm({
               type="text"
               value={issuingVetAddress}
               onChange={(e) => setIssuingVetAddress(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -684,7 +868,8 @@ export default function PetProfileForm({
               type="text"
               value={issuingVetPostalCode}
               onChange={(e) => setIssuingVetPostalCode(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -695,7 +880,8 @@ export default function PetProfileForm({
               type="text"
               value={issuingVetCity}
               onChange={(e) => setIssuingVetCity(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -706,7 +892,8 @@ export default function PetProfileForm({
               type="text"
               value={issuingVetCountry}
               onChange={(e) => setIssuingVetCountry(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div>
@@ -717,7 +904,8 @@ export default function PetProfileForm({
               type="tel"
               value={issuingVetPhone}
               onChange={(e) => setIssuingVetPhone(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
           <div className="md:col-span-2">
@@ -728,7 +916,8 @@ export default function PetProfileForm({
               type="email"
               value={issuingVetEmail}
               onChange={(e) => setIssuingVetEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+              disabled={areSectionsDisabled}
             />
           </div>
         </div>
@@ -742,132 +931,189 @@ export default function PetProfileForm({
           </span>
           Vaccination Against Rabies
         </h2>
-        {rabiesVaccinations.map((vax, index) => (
-          <div
-            key={index}
-            className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50"
-          >
-            <div className="grid md:grid-cols-2 gap-4 mb-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Manufacturer
-                </label>
-                <input
-                  type="text"
-                  value={vax.manufacturer}
-                  onChange={(e) =>
-                    updateRabiesVaccination(index, "manufacturer", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+        {rabiesVaccinations.map((vax, index) => {
+          const isExistingRecord = index < existingRabiesCount;
+          const isRecordLocked = isExistingRecord && isClinic;
+
+          return (
+            <div
+              key={index}
+              className={`mb-4 p-4 border rounded-lg ${
+                isRecordLocked
+                  ? "border-amber-200 bg-amber-50"
+                  : "border-gray-200 bg-gray-50"
+              }`}
+            >
+              {isRecordLocked && (
+                <div className="mb-3 flex items-center text-sm text-amber-700">
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Existing record - locked for clinics
+                </div>
+              )}
+              <div className="grid md:grid-cols-2 gap-4 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manufacturer
+                  </label>
+                  <input
+                    type="text"
+                    value={vax.manufacturer}
+                    onChange={(e) =>
+                      updateRabiesVaccination(
+                        index,
+                        "manufacturer",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Name of Vaccine
+                  </label>
+                  <input
+                    type="text"
+                    value={vax.vaccineName}
+                    onChange={(e) =>
+                      updateRabiesVaccination(
+                        index,
+                        "vaccineName",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Batch Number
+                  </label>
+                  <input
+                    type="text"
+                    value={vax.batchNumber}
+                    onChange={(e) =>
+                      updateRabiesVaccination(
+                        index,
+                        "batchNumber",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Vaccination Date
+                  </label>
+                  <input
+                    type="date"
+                    value={vax.vaccinationDate}
+                    onChange={(e) =>
+                      updateRabiesVaccination(
+                        index,
+                        "vaccinationDate",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Valid From
+                  </label>
+                  <input
+                    type="date"
+                    value={vax.validFrom}
+                    onChange={(e) =>
+                      updateRabiesVaccination(
+                        index,
+                        "validFrom",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Valid Until
+                  </label>
+                  <input
+                    type="date"
+                    value={vax.validUntil}
+                    onChange={(e) =>
+                      updateRabiesVaccination(
+                        index,
+                        "validUntil",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Authorized Veterinarian
+                  </label>
+                  <input
+                    type="text"
+                    value={vax.authorizedVeterinarian}
+                    onChange={(e) =>
+                      updateRabiesVaccination(
+                        index,
+                        "authorizedVeterinarian",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    value={vax.notes}
+                    onChange={(e) =>
+                      updateRabiesVaccination(index, "notes", e.target.value)
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    rows={2}
+                    disabled={isRecordLocked}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Name of Vaccine
-                </label>
-                <input
-                  type="text"
-                  value={vax.vaccineName}
-                  onChange={(e) =>
-                    updateRabiesVaccination(index, "vaccineName", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Batch Number
-                </label>
-                <input
-                  type="text"
-                  value={vax.batchNumber}
-                  onChange={(e) =>
-                    updateRabiesVaccination(index, "batchNumber", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Vaccination Date
-                </label>
-                <input
-                  type="date"
-                  value={vax.vaccinationDate}
-                  onChange={(e) =>
-                    updateRabiesVaccination(index, "vaccinationDate", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Valid From
-                </label>
-                <input
-                  type="date"
-                  value={vax.validFrom}
-                  onChange={(e) =>
-                    updateRabiesVaccination(index, "validFrom", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Valid Until
-                </label>
-                <input
-                  type="date"
-                  value={vax.validUntil}
-                  onChange={(e) =>
-                    updateRabiesVaccination(index, "validUntil", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Authorized Veterinarian
-                </label>
-                <input
-                  type="text"
-                  value={vax.authorizedVeterinarian}
-                  onChange={(e) =>
-                    updateRabiesVaccination(
-                      index,
-                      "authorizedVeterinarian",
-                      e.target.value
-                    )
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes
-                </label>
-                <textarea
-                  value={vax.notes}
-                  onChange={(e) =>
-                    updateRabiesVaccination(index, "notes", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  rows={2}
-                />
-              </div>
+              {rabiesVaccinations.length > 1 && !isRecordLocked && (
+                <button
+                  type="button"
+                  onClick={() => removeRabiesVaccination(index)}
+                  className="text-red-600 text-sm hover:text-red-700 font-medium"
+                >
+                  Remove Entry
+                </button>
+              )}
             </div>
-            {rabiesVaccinations.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeRabiesVaccination(index)}
-                className="text-red-600 text-sm hover:text-red-700 font-medium"
-              >
-                Remove Entry
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
         <button
           type="button"
           onClick={addRabiesVaccination}
@@ -885,106 +1131,153 @@ export default function PetProfileForm({
           </span>
           Anti-Echinococcus Treatment / Other Treatments Against Parasites
         </h2>
-        {parasiteTreatments.map((treatment, index) => (
-          <div
-            key={index}
-            className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50"
-          >
-            <div className="grid md:grid-cols-2 gap-4 mb-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Manufacturer
-                </label>
-                <input
-                  type="text"
-                  value={treatment.manufacturer}
-                  onChange={(e) =>
-                    updateParasiteTreatment(index, "manufacturer", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+        {parasiteTreatments.map((treatment, index) => {
+          const isExistingRecord = index < existingParasiteCount;
+          const isRecordLocked = isExistingRecord && isClinic;
+
+          return (
+            <div
+              key={index}
+              className={`mb-4 p-4 border rounded-lg ${
+                isRecordLocked
+                  ? "border-amber-200 bg-amber-50"
+                  : "border-gray-200 bg-gray-50"
+              }`}
+            >
+              {isRecordLocked && (
+                <div className="mb-3 flex items-center text-sm text-amber-700">
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Existing record - locked for clinics
+                </div>
+              )}
+              <div className="grid md:grid-cols-2 gap-4 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manufacturer
+                  </label>
+                  <input
+                    type="text"
+                    value={treatment.manufacturer}
+                    onChange={(e) =>
+                      updateParasiteTreatment(
+                        index,
+                        "manufacturer",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Name
+                  </label>
+                  <input
+                    type="text"
+                    value={treatment.productName}
+                    onChange={(e) =>
+                      updateParasiteTreatment(
+                        index,
+                        "productName",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={treatment.treatmentDate}
+                    onChange={(e) =>
+                      updateParasiteTreatment(
+                        index,
+                        "treatmentDate",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Valid Until
+                  </label>
+                  <input
+                    type="date"
+                    value={treatment.validUntil}
+                    onChange={(e) =>
+                      updateParasiteTreatment(
+                        index,
+                        "validUntil",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Authorized Veterinarian
+                  </label>
+                  <input
+                    type="text"
+                    value={treatment.authorizedVeterinarian}
+                    onChange={(e) =>
+                      updateParasiteTreatment(
+                        index,
+                        "authorizedVeterinarian",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    value={treatment.notes}
+                    onChange={(e) =>
+                      updateParasiteTreatment(index, "notes", e.target.value)
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    rows={2}
+                    disabled={isRecordLocked}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Name
-                </label>
-                <input
-                  type="text"
-                  value={treatment.productName}
-                  onChange={(e) =>
-                    updateParasiteTreatment(index, "productName", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={treatment.treatmentDate}
-                  onChange={(e) =>
-                    updateParasiteTreatment(index, "treatmentDate", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Valid Until
-                </label>
-                <input
-                  type="date"
-                  value={treatment.validUntil}
-                  onChange={(e) =>
-                    updateParasiteTreatment(index, "validUntil", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Authorized Veterinarian
-                </label>
-                <input
-                  type="text"
-                  value={treatment.authorizedVeterinarian}
-                  onChange={(e) =>
-                    updateParasiteTreatment(
-                      index,
-                      "authorizedVeterinarian",
-                      e.target.value
-                    )
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes
-                </label>
-                <textarea
-                  value={treatment.notes}
-                  onChange={(e) =>
-                    updateParasiteTreatment(index, "notes", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  rows={2}
-                />
-              </div>
+              {parasiteTreatments.length > 1 && !isRecordLocked && (
+                <button
+                  type="button"
+                  onClick={() => removeParasiteTreatment(index)}
+                  className="text-red-600 text-sm hover:text-red-700 font-medium"
+                >
+                  Remove Entry
+                </button>
+              )}
             </div>
-            {parasiteTreatments.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeParasiteTreatment(index)}
-                className="text-red-600 text-sm hover:text-red-700 font-medium"
-              >
-                Remove Entry
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
         <button
           type="button"
           onClick={addParasiteTreatment}
@@ -1002,119 +1295,159 @@ export default function PetProfileForm({
           </span>
           Other Vaccinations / Treatments
         </h2>
-        {otherTreatments.map((treatment, index) => (
-          <div
-            key={index}
-            className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50"
-          >
-            <div className="grid md:grid-cols-2 gap-4 mb-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Manufacturer
-                </label>
-                <input
-                  type="text"
-                  value={treatment.manufacturer}
-                  onChange={(e) =>
-                    updateOtherTreatment(index, "manufacturer", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+        {otherTreatments.map((treatment, index) => {
+          const isExistingRecord = index < existingOtherCount;
+          const isRecordLocked = isExistingRecord && isClinic;
+
+          return (
+            <div
+              key={index}
+              className={`mb-4 p-4 border rounded-lg ${
+                isRecordLocked
+                  ? "border-amber-200 bg-amber-50"
+                  : "border-gray-200 bg-gray-50"
+              }`}
+            >
+              {isRecordLocked && (
+                <div className="mb-3 flex items-center text-sm text-amber-700">
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Existing record - locked for clinics
+                </div>
+              )}
+              <div className="grid md:grid-cols-2 gap-4 mb-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manufacturer
+                  </label>
+                  <input
+                    type="text"
+                    value={treatment.manufacturer}
+                    onChange={(e) =>
+                      updateOtherTreatment(
+                        index,
+                        "manufacturer",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Name of Vaccine
+                  </label>
+                  <input
+                    type="text"
+                    value={treatment.vaccineName}
+                    onChange={(e) =>
+                      updateOtherTreatment(index, "vaccineName", e.target.value)
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Batch Number
+                  </label>
+                  <input
+                    type="text"
+                    value={treatment.batchNumber}
+                    onChange={(e) =>
+                      updateOtherTreatment(index, "batchNumber", e.target.value)
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Vaccination Date
+                  </label>
+                  <input
+                    type="date"
+                    value={treatment.vaccinationDate}
+                    onChange={(e) =>
+                      updateOtherTreatment(
+                        index,
+                        "vaccinationDate",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Valid Until
+                  </label>
+                  <input
+                    type="date"
+                    value={treatment.validUntil}
+                    onChange={(e) =>
+                      updateOtherTreatment(index, "validUntil", e.target.value)
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Authorized Veterinarian
+                  </label>
+                  <input
+                    type="text"
+                    value={treatment.authorizedVeterinarian}
+                    onChange={(e) =>
+                      updateOtherTreatment(
+                        index,
+                        "authorizedVeterinarian",
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    disabled={isRecordLocked}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    value={treatment.notes}
+                    onChange={(e) =>
+                      updateOtherTreatment(index, "notes", e.target.value)
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-600 disabled:cursor-not-allowed"
+                    rows={2}
+                    disabled={isRecordLocked}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Name of Vaccine
-                </label>
-                <input
-                  type="text"
-                  value={treatment.vaccineName}
-                  onChange={(e) =>
-                    updateOtherTreatment(index, "vaccineName", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Batch Number
-                </label>
-                <input
-                  type="text"
-                  value={treatment.batchNumber}
-                  onChange={(e) =>
-                    updateOtherTreatment(index, "batchNumber", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Vaccination Date
-                </label>
-                <input
-                  type="date"
-                  value={treatment.vaccinationDate}
-                  onChange={(e) =>
-                    updateOtherTreatment(index, "vaccinationDate", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Valid Until
-                </label>
-                <input
-                  type="date"
-                  value={treatment.validUntil}
-                  onChange={(e) =>
-                    updateOtherTreatment(index, "validUntil", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Authorized Veterinarian
-                </label>
-                <input
-                  type="text"
-                  value={treatment.authorizedVeterinarian}
-                  onChange={(e) =>
-                    updateOtherTreatment(
-                      index,
-                      "authorizedVeterinarian",
-                      e.target.value
-                    )
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes
-                </label>
-                <textarea
-                  value={treatment.notes}
-                  onChange={(e) =>
-                    updateOtherTreatment(index, "notes", e.target.value)
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  rows={2}
-                />
-              </div>
+              {otherTreatments.length > 1 && !isRecordLocked && (
+                <button
+                  type="button"
+                  onClick={() => removeOtherTreatment(index)}
+                  className="text-red-600 text-sm hover:text-red-700 font-medium"
+                >
+                  Remove Entry
+                </button>
+              )}
             </div>
-            {otherTreatments.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeOtherTreatment(index)}
-                className="text-red-600 text-sm hover:text-red-700 font-medium"
-              >
-                Remove Entry
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
         <button
           type="button"
           onClick={addOtherTreatment}

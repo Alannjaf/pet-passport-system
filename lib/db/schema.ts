@@ -99,6 +99,10 @@ export const petProfiles = pgTable("pet_profiles", {
   lastEditedBy: text("last_edited_by"),
   lastEditedByName: text("last_edited_by_name"),
   lastEditedAt: timestamp("last_edited_at"),
+  // Passport sections lock - prevents clinics from editing after first submission
+  passportSectionsLocked: text("passport_sections_locked")
+    .default("false")
+    .notNull(),
 });
 
 // Pet Profile Versions Table (Full History)

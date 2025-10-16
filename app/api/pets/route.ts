@@ -62,6 +62,20 @@ export async function POST(request: NextRequest) {
       otherTreatments: otherData,
     } = body;
 
+    // Check if all passport sections are filled to lock them
+    const hasOwnerDetails = ownerName && ownerAddress;
+    const hasAnimalDescription = petName && species;
+    const hasMarking = transponderCode || tattooCode;
+    const hasIssuingInfo = issuingVetName || issuingVetAddress;
+
+    // Lock sections if clinic is creating and all sections are filled
+    const shouldLock =
+      session.user.role === "clinic" &&
+      hasOwnerDetails &&
+      hasAnimalDescription &&
+      hasMarking &&
+      hasIssuingInfo;
+
     // Create pet profile
     const newProfile = await db
       .insert(petProfiles)
@@ -104,6 +118,7 @@ export async function POST(request: NextRequest) {
         lastEditedBy: session.user.id,
         lastEditedByName: session.user.name,
         lastEditedAt: new Date(),
+        passportSectionsLocked: shouldLock ? "true" : "false",
       })
       .returning();
 
@@ -269,17 +284,50 @@ export async function PUT(request: NextRequest) {
       otherTreatments: otherData,
     } = body;
 
-    // Update pet profile
-    await db
-      .update(petProfiles)
-      .set({
+    // Get existing profile to check lock status
+    const existingProfile = await db
+      .select()
+      .from(petProfiles)
+      .where(eq(petProfiles.id, profileId))
+      .limit(1);
+
+    if (existingProfile.length === 0) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
+
+    const isLocked = existingProfile[0].passportSectionsLocked === "true";
+    const isClinic = session.user.role === "clinic";
+
+    // Prepare update data
+    let updateData: any = {
+      lastEditedBy: session.user.id,
+      lastEditedByName: session.user.name,
+      lastEditedAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // If locked and user is clinic, only allow non-locked fields to be updated
+    if (isLocked && isClinic) {
+      // Clinics can only edit medical data when locked (owner details are also locked)
+      updateData = {
+        ...updateData,
+        // Medical info (always editable)
+        photoBase64,
+        allergies,
+        chronicConditions,
+        currentMedications,
+      };
+    } else {
+      // Syndicate or unlocked: can edit everything
+      updateData = {
+        ...updateData,
         // Owner
         ownerName,
         ownerAddress,
         ownerCity,
         ownerCountry,
         ownerPhone,
-        // Animal
+        // Animal (locked for clinics after first submission)
         petName,
         species,
         breed,
@@ -287,14 +335,14 @@ export async function PUT(request: NextRequest) {
         dateOfBirth,
         color,
         notableFeatures,
-        // Marking
+        // Marking (locked for clinics after first submission)
         transponderCode,
         transponderAppliedDate,
         transponderLocation,
         tattooCode,
         tattooAppliedDate,
         tattooLocation,
-        // Issuing Clinic
+        // Issuing Clinic (locked for clinics after first submission)
         issuingVetName,
         issuingVetAddress,
         issuingVetPostalCode,
@@ -307,11 +355,30 @@ export async function PUT(request: NextRequest) {
         allergies,
         chronicConditions,
         currentMedications,
-        lastEditedBy: session.user.id,
-        lastEditedByName: session.user.name,
-        lastEditedAt: new Date(),
-        updatedAt: new Date(),
-      })
+      };
+
+      // If it's unlocked and clinic is updating with all sections filled, lock it
+      if (!isLocked && isClinic) {
+        const hasOwnerDetails = ownerName && ownerAddress;
+        const hasAnimalDescription = petName && species;
+        const hasMarking = transponderCode || tattooCode;
+        const hasIssuingInfo = issuingVetName || issuingVetAddress;
+
+        if (
+          hasOwnerDetails &&
+          hasAnimalDescription &&
+          hasMarking &&
+          hasIssuingInfo
+        ) {
+          updateData.passportSectionsLocked = "true";
+        }
+      }
+    }
+
+    // Update pet profile
+    await db
+      .update(petProfiles)
+      .set(updateData)
       .where(eq(petProfiles.id, profileId));
 
     // Get latest version number
@@ -428,4 +495,3 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
-
