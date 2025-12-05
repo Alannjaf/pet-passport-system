@@ -12,7 +12,7 @@ interface Member {
   titleKu: string;
   photoBase64: string | null;
   parentId: number | null;
-  displayOrder: number;
+  displayOrder: number | null;
 }
 
 interface MemberFormProps {
