@@ -168,6 +168,20 @@ export const otherTreatments = pgTable("other_treatments", {
   notes: text("notes"),
 });
 
+// Syndicate Members Table (Organizational Structure)
+export const syndicateMembers = pgTable("syndicate_members", {
+  id: serial("id").primaryKey(),
+  nameEn: text("name_en").notNull(),           // English name
+  nameKu: text("name_ku").notNull(),           // Kurdish name
+  titleEn: text("title_en").notNull(),         // Position in English
+  titleKu: text("title_ku").notNull(),         // Position in Kurdish
+  photoBase64: text("photo_base64"),           // Photo as base64 (nullable for avatar fallback)
+  parentId: integer("parent_id"),              // Parent member ID for hierarchy
+  displayOrder: integer("display_order").default(0), // Order among siblings
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Types
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type NewAdminUser = typeof adminUsers.$inferInsert;
@@ -189,3 +203,5 @@ export type ParasiteTreatment = typeof parasiteTreatments.$inferSelect;
 export type NewParasiteTreatment = typeof parasiteTreatments.$inferInsert;
 export type OtherTreatment = typeof otherTreatments.$inferSelect;
 export type NewOtherTreatment = typeof otherTreatments.$inferInsert;
+export type SyndicateMember = typeof syndicateMembers.$inferSelect;
+export type NewSyndicateMember = typeof syndicateMembers.$inferInsert;

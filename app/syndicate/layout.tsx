@@ -43,6 +43,12 @@ export default async function SyndicateLayout({
                   Clinics
                 </Link>
                 <Link
+                  href="/syndicate/members"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition"
+                >
+                  Members
+                </Link>
+                <Link
                   href="/syndicate/qr-generator"
                   className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition"
                 >
