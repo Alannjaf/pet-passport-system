@@ -84,6 +84,35 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* About Section */}
+      <section className="py-20 bg-gradient-to-r from-emerald-800 to-teal-700">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+              <div className="flex-shrink-0">
+                <div className="w-32 h-32 md:w-40 md:h-40 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
+                  <Image src="/Logo.svg" alt="Logo" width={96} height={96} className="w-20 h-20 md:w-24 md:h-24" />
+                </div>
+              </div>
+              <div className="text-center md:text-left">
+                <h3 className="text-3xl font-bold text-white mb-4">About Us</h3>
+                <p className="text-lg text-emerald-100 leading-relaxed">
+                  The <span className="font-semibold text-white">Veterinarians Syndicate in Kurdistan Region of Iraq</span>, 
+                  founded in <span className="font-semibold text-amber-300">1992</span>, is the professional body representing 
+                  veterinarians across the Kurdistan Region of Iraq. We advance animal health and welfare, safeguard public 
+                  health through a <span className="italic text-white">One Health</span> approach, and uphold professional 
+                  standards in veterinary practice, education, and ethics.
+                </p>
+                <p className="text-emerald-200 mt-4">
+                  The Syndicate serves as a trusted partner to government, academia, and industry, supporting evidence-based 
+                  policy, continuous professional development, and services that protect both animals and people.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="container mx-auto px-4 py-20">
         <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
