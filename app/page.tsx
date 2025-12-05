@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@/lib/auth/auth";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -6,10 +7,13 @@ export default async function Home() {
   const session = await auth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-blue-600">Pet Passport</h1>
+        <Link href="/" className="flex items-center gap-3">
+          <Image src="/Logo.svg" alt="Logo" width={50} height={50} />
+          <span className="text-xl font-bold text-emerald-700 hidden sm:block">Veterinarians Syndicate</span>
+        </Link>
         <div className="flex gap-4 items-center">
           {session ? (
             <>
@@ -19,7 +23,7 @@ export default async function Home() {
                     ? "/syndicate/dashboard"
                     : "/clinic/dashboard"
                 }
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
               >
                 Go to Dashboard
               </Link>
@@ -28,7 +32,7 @@ export default async function Home() {
           ) : (
             <Link
               href="/login"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
             >
               Login
             </Link>
@@ -38,14 +42,17 @@ export default async function Home() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
-        <h2 className="text-5xl font-bold text-gray-900 mb-6">
-          Pet Passport System
+        <div className="flex justify-center mb-8">
+          <Image src="/Logo.svg" alt="Veterinarians Syndicate Logo" width={150} height={150} />
+        </div>
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          Veterinarians Syndicate in Kurdistan Region of Iraq
         </h2>
-        <p className="text-xl text-gray-600 mb-4 max-w-2xl mx-auto">
-          Complete pet health management and digital passport solution
+        <p className="text-2xl text-emerald-600 font-semibold mb-4 max-w-2xl mx-auto">
+          Healthy Animals. Safe Food. Stronger Communities
         </p>
         <p className="text-lg text-gray-500 mb-8 max-w-3xl mx-auto">
-          A comprehensive platform for pet clinics, syndicate, and pet owners to
+          A comprehensive platform for veterinary clinics and the syndicate to
           manage pet health records, vaccinations, and digital passports.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
@@ -56,21 +63,21 @@ export default async function Home() {
                   ? "/syndicate/dashboard"
                   : "/clinic/dashboard"
               }
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-lg font-semibold"
+              className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-lg font-semibold"
             >
               Go to Dashboard
             </Link>
           ) : (
             <Link
               href="/login"
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-lg font-semibold"
+              className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-lg font-semibold"
             >
               Clinic Login
             </Link>
           )}
           <Link
             href="/scan"
-            className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-lg font-semibold"
+            className="px-8 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-lg font-semibold"
           >
             Scan QR Code
           </Link>
@@ -169,7 +176,12 @@ export default async function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8 mt-20">
         <div className="container mx-auto px-4 text-center">
-          <p>&copy; 2025 Pet Passport System. All rights reserved.</p>
+          <div className="flex justify-center mb-4">
+            <Image src="/Logo.svg" alt="Logo" width={60} height={60} className="opacity-80" />
+          </div>
+          <p className="text-emerald-400 font-semibold mb-2">Veterinarians Syndicate in Kurdistan Region of Iraq</p>
+          <p className="text-gray-400 text-sm mb-4">Healthy Animals. Safe Food. Stronger Communities</p>
+          <p className="text-gray-500 text-sm">&copy; 2025 Veterinarians Syndicate. All rights reserved.</p>
         </div>
       </footer>
     </div>
