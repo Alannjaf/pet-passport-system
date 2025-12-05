@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { syndicateMembers } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 // GET - Fetch all members (public)
 export async function GET() {
@@ -40,6 +40,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate parentId exists if provided
+    const normalizedParentId = parentId || null;
+    if (normalizedParentId !== null) {
+      const [parentMember] = await db
+        .select({ id: syndicateMembers.id })
+        .from(syndicateMembers)
+        .where(eq(syndicateMembers.id, normalizedParentId));
+
+      if (!parentMember) {
+        return NextResponse.json(
+          { error: "Parent member not found" },
+          { status: 400 }
+        );
+      }
+    }
+
     const [newMember] = await db
       .insert(syndicateMembers)
       .values({
@@ -48,7 +64,7 @@ export async function POST(request: NextRequest) {
         titleEn,
         titleKu,
         photoBase64: photoBase64 || null,
-        parentId: parentId || null,
+        parentId: normalizedParentId,
         displayOrder: displayOrder || 0,
       })
       .returning();

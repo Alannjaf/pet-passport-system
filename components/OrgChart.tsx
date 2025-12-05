@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 
 interface Member {
   id: number;
@@ -86,11 +85,9 @@ function MemberCard({
         {/* Avatar/Photo */}
         <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-3 overflow-hidden border-2 border-emerald-300">
           {member.photoBase64 ? (
-            <Image
+            <img
               src={member.photoBase64}
               alt={member.nameEn}
-              width={64}
-              height={64}
               className="w-full h-full object-cover"
             />
           ) : (

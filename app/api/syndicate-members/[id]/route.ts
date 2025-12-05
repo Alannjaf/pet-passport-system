@@ -4,6 +4,32 @@ import { syndicateMembers } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq } from "drizzle-orm";
 
+// Helper function to check for circular references
+async function wouldCreateCycle(memberId: number, newParentId: number): Promise<boolean> {
+  const allMembers = await db.select().from(syndicateMembers);
+  const memberMap = new Map(allMembers.map((m) => [m.id, m]));
+
+  // Walk up the parent chain from newParentId
+  let currentId: number | null = newParentId;
+  const visited = new Set<number>();
+
+  while (currentId !== null) {
+    if (currentId === memberId) {
+      // Found the member in its own ancestor chain - would create a cycle
+      return true;
+    }
+    if (visited.has(currentId)) {
+      // Already visited this node - existing cycle in data (shouldn't happen)
+      break;
+    }
+    visited.add(currentId);
+    const current = memberMap.get(currentId);
+    currentId = current?.parentId ?? null;
+  }
+
+  return false;
+}
+
 // GET - Fetch single member
 export async function GET(
   request: NextRequest,
@@ -57,6 +83,47 @@ export async function PUT(
     const body = await request.json();
     const { nameEn, nameKu, titleEn, titleKu, photoBase64, parentId, displayOrder } = body;
 
+    if (!nameEn || !nameKu || !titleEn || !titleKu) {
+      return NextResponse.json(
+        { error: "Name and title in both languages are required" },
+        { status: 400 }
+      );
+    }
+
+    const normalizedParentId = parentId || null;
+
+    // Validate parentId exists if provided
+    if (normalizedParentId !== null) {
+      // Cannot set self as parent
+      if (normalizedParentId === memberId) {
+        return NextResponse.json(
+          { error: "A member cannot be their own parent" },
+          { status: 400 }
+        );
+      }
+
+      const [parentMember] = await db
+        .select({ id: syndicateMembers.id })
+        .from(syndicateMembers)
+        .where(eq(syndicateMembers.id, normalizedParentId));
+
+      if (!parentMember) {
+        return NextResponse.json(
+          { error: "Parent member not found" },
+          { status: 400 }
+        );
+      }
+
+      // Check for circular reference
+      const wouldCycle = await wouldCreateCycle(memberId, normalizedParentId);
+      if (wouldCycle) {
+        return NextResponse.json(
+          { error: "This would create a circular reference in the hierarchy" },
+          { status: 400 }
+        );
+      }
+    }
+
     const [updatedMember] = await db
       .update(syndicateMembers)
       .set({
@@ -64,9 +131,9 @@ export async function PUT(
         nameKu,
         titleEn,
         titleKu,
-        photoBase64,
-        parentId,
-        displayOrder,
+        photoBase64: photoBase64 || null,
+        parentId: normalizedParentId,
+        displayOrder: displayOrder || 0,
         updatedAt: new Date(),
       })
       .where(eq(syndicateMembers.id, memberId))
@@ -104,18 +171,24 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid member ID" }, { status: 400 });
     }
 
-    // First, update any children to have no parent (or you could prevent deletion if children exist)
-    await db
-      .update(syndicateMembers)
-      .set({ parentId: null })
-      .where(eq(syndicateMembers.parentId, memberId));
+    // Use transaction to ensure atomicity
+    const result = await db.transaction(async (tx) => {
+      // First, update any children to have no parent
+      await tx
+        .update(syndicateMembers)
+        .set({ parentId: null })
+        .where(eq(syndicateMembers.parentId, memberId));
 
-    const [deletedMember] = await db
-      .delete(syndicateMembers)
-      .where(eq(syndicateMembers.id, memberId))
-      .returning();
+      // Then delete the member
+      const [deletedMember] = await tx
+        .delete(syndicateMembers)
+        .where(eq(syndicateMembers.id, memberId))
+        .returning();
 
-    if (!deletedMember) {
+      return deletedMember;
+    });
+
+    if (!result) {
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
 
