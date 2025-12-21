@@ -223,22 +223,49 @@ function OrgNode({
       {/* Children */}
       {hasChildren && isExpanded && (
         <div className="mt-4 sm:mt-6 flex flex-col items-center w-full relative">
-          {/* Vertical line from parent down to children */}
+          {/* Vertical line from parent down to connector level */}
           <div className="flex justify-center">
-            <div className="w-0.5 h-4 sm:h-6 bg-emerald-300" />
+            <div className="bg-emerald-500" style={{ width: '2px', height: '20px' }} />
           </div>
 
-          {/* Children container - using flexbox with wrapping for better variable height handling */}
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mt-2 sm:mt-4 w-full max-w-7xl px-2 sm:px-4">
-            {node.children.map((child) => (
-              <div key={child.id} className="flex flex-col items-center flex-[1_1_100%] sm:flex-[1_1_calc(50%-1.5rem)] lg:flex-[1_1_calc(33.333%-1.5rem)] xl:flex-[1_1_calc(25%-1.5rem)] min-w-[160px] sm:min-w-[200px] max-w-[280px]">
-                <OrgNode
-                  node={child}
-                  level={level + 1}
-                  expandedNodes={expandedNodes}
-                  toggleNode={toggleNode}
-                  defaultExpandLevel={defaultExpandLevel}
+          {/* Horizontal connector bar - spans across all children when multiple, positioned at the end of parent vertical line */}
+          {node.children.length > 1 && (
+            <div 
+              className="absolute bg-emerald-500" 
+              style={{ 
+                height: '2px',
+                top: '20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 'calc(100% - 4rem)',
+                maxWidth: 'calc(100vw - 8rem)',
+              }} 
+            />
+          )}
+
+          {/* Children container with connector lines */}
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mt-5 w-full max-w-7xl px-2 sm:px-4 relative">
+            {node.children.map((child, index) => (
+              <div key={child.id} className="flex flex-col items-center flex-[1_1_100%] sm:flex-[1_1_calc(50%-1.5rem)] lg:flex-[1_1_calc(33.333%-1.5rem)] xl:flex-[1_1_calc(25%-1.5rem)] min-w-[160px] sm:min-w-[200px] max-w-[280px] relative">
+                {/* Vertical line connecting from horizontal bar (or parent line) down to touch top of child card */}
+                <div 
+                  className="absolute left-1/2 transform -translate-x-1/2 bg-emerald-500" 
+                  style={{ 
+                    top: node.children.length > 1 ? '-25px' : '-25px',
+                    height: '25px', 
+                    width: '2px',
+                    zIndex: 0
+                  }} 
                 />
+                <div className="relative z-10 w-full">
+                  <OrgNode
+                    node={child}
+                    level={level + 1}
+                    expandedNodes={expandedNodes}
+                    toggleNode={toggleNode}
+                    defaultExpandLevel={defaultExpandLevel}
+                  />
+                </div>
               </div>
             ))}
           </div>
