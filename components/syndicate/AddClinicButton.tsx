@@ -10,7 +10,7 @@ export default function AddClinicButton() {
   const [clinicName, setClinicName] = useState('')
   const [contactInfo, setContactInfo] = useState('')
   const [loading, setLoading] = useState(false)
-  const [credentials, setCredentials] = useState<{ accountNumber: string; password: string } | null>(null)
+  const [credentials, setCredentials] = useState<{ accountNumber: string; password: string; clinicName: string } | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,7 +70,7 @@ export default function AddClinicButton() {
     doc.setFont('helvetica', 'bold')
     doc.text('Clinic Name:', 20, 75)
     doc.setFont('helvetica', 'normal')
-    doc.text(clinicName, 60, 75)
+    doc.text(credentials.clinicName, 60, 75)
     
     // Account credentials box
     doc.setFillColor(240, 240, 240)
@@ -118,7 +118,7 @@ export default function AddClinicButton() {
     doc.text('Pet Passport System - Syndicate Administration', 105, 287, { align: 'center' })
     
     // Save the PDF
-    doc.save(`${clinicName.replace(/[^a-z0-9]/gi, '_')}_credentials.pdf`)
+    doc.save(`${credentials.clinicName.replace(/[^a-z0-9]/gi, '_')}_credentials.pdf`)
   }
 
   return (

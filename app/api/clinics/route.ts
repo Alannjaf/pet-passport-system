@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
       credentials: {
         accountNumber,
         password: plainPassword,
+        clinicName,
       },
     })
   } catch (error) {
