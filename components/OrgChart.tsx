@@ -68,24 +68,69 @@ function MemberCard({
   isExpanded,
   hasChildren,
   onToggle,
+  level,
 }: {
   member: TreeNode;
   isExpanded: boolean;
   hasChildren: boolean;
   onToggle: () => void;
+  level: number;
 }) {
+  // Size hierarchy based on level
+  const getSizeClasses = () => {
+    if (level === 0) {
+      // Root level - largest
+      return {
+        container: "p-3 sm:p-4 min-w-[160px] max-w-[200px] sm:min-w-[200px] sm:max-w-[280px] min-h-[180px] sm:min-h-[200px]",
+        avatar: "w-12 h-12 sm:w-16 sm:h-16 mb-2 sm:mb-3",
+        avatarIcon: "w-8 h-8 sm:w-10 sm:h-10",
+        nameEn: "text-xs sm:text-sm",
+        nameKu: "text-xs sm:text-sm",
+        titleEn: "text-[10px] sm:text-xs",
+        titleKu: "text-[10px] sm:text-xs",
+        chevron: "w-4 h-4 sm:w-5 sm:h-5",
+      };
+    } else if (level === 1) {
+      // Second level - slightly smaller
+      return {
+        container: "p-2.5 sm:p-3.5 min-w-[140px] max-w-[180px] sm:min-w-[180px] sm:max-w-[240px] min-h-[160px] sm:min-h-[180px]",
+        avatar: "w-10 h-10 sm:w-14 sm:h-14 mb-2 sm:mb-2.5",
+        avatarIcon: "w-7 h-7 sm:w-9 sm:h-9",
+        nameEn: "text-[11px] sm:text-[13px]",
+        nameKu: "text-[11px] sm:text-[13px]",
+        titleEn: "text-[9px] sm:text-[11px]",
+        titleKu: "text-[9px] sm:text-[11px]",
+        chevron: "w-3.5 h-3.5 sm:w-4.5 sm:h-4.5",
+      };
+    } else {
+      // Third level and below - smallest
+      return {
+        container: "p-2 sm:p-3 min-w-[120px] max-w-[160px] sm:min-w-[160px] sm:max-w-[200px] min-h-[140px] sm:min-h-[160px]",
+        avatar: "w-9 h-9 sm:w-12 sm:h-12 mb-1.5 sm:mb-2",
+        avatarIcon: "w-6 h-6 sm:w-8 sm:h-8",
+        nameEn: "text-[10px] sm:text-xs",
+        nameKu: "text-[10px] sm:text-xs",
+        titleEn: "text-[8px] sm:text-[10px]",
+        titleKu: "text-[8px] sm:text-[10px]",
+        chevron: "w-3 h-3 sm:w-4 sm:h-4",
+      };
+    }
+  };
+
+  const sizes = getSizeClasses();
+
   return (
     <div
-      className={`bg-white rounded-xl shadow-md border-2 border-emerald-200 p-3 sm:p-4 min-w-[160px] max-w-[200px] sm:min-w-[200px] sm:max-w-[280px] min-h-[180px] sm:min-h-[200px] ${
+      className={`bg-white rounded-xl shadow-md border-2 border-emerald-200 ${sizes.container} w-full ${
         hasChildren
           ? "cursor-pointer hover:border-emerald-400 active:scale-95 active:shadow-sm transition-all duration-200 touch-manipulation"
           : ""
       }`}
       onClick={hasChildren ? onToggle : undefined}
     >
-      <div className="flex flex-col items-center text-center">
+      <div className="flex flex-col items-center text-center w-full">
         {/* Avatar/Photo */}
-        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-2 sm:mb-3 overflow-hidden border-2 border-emerald-300">
+        <div className={`${sizes.avatar} rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border-2 border-emerald-300 flex-shrink-0`}>
           {member.photoBase64 ? (
             <img
               src={member.photoBase64}
@@ -94,7 +139,7 @@ function MemberCard({
             />
           ) : (
             <svg
-              className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600"
+              className={`${sizes.avatarIcon} text-emerald-600`}
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -104,18 +149,22 @@ function MemberCard({
         </div>
 
         {/* Name - English */}
-        <h4 className="font-bold text-gray-900 text-xs sm:text-sm">{member.nameEn}</h4>
+        <h4 className={`font-bold text-gray-900 ${sizes.nameEn} w-full truncate px-1`} title={member.nameEn}>
+          {member.nameEn}
+        </h4>
         
         {/* Name - Kurdish */}
-        <p className="text-gray-600 text-xs sm:text-sm font-medium" dir="rtl">
+        <p className={`text-gray-600 ${sizes.nameKu} font-medium w-full truncate px-1`} dir="rtl" title={member.nameKu}>
           {member.nameKu}
         </p>
 
         {/* Title - English */}
-        <p className="text-emerald-700 text-[10px] sm:text-xs mt-1 sm:mt-2">{member.titleEn}</p>
+        <p className={`text-emerald-700 ${sizes.titleEn} mt-1 sm:mt-2 w-full line-clamp-2 px-1`} title={member.titleEn}>
+          {member.titleEn}
+        </p>
         
         {/* Title - Kurdish */}
-        <p className="text-emerald-600 text-[10px] sm:text-xs" dir="rtl">
+        <p className={`text-emerald-600 ${sizes.titleKu} w-full line-clamp-2 px-1`} dir="rtl" title={member.titleKu}>
           {member.titleKu}
         </p>
 
@@ -123,7 +172,7 @@ function MemberCard({
         {hasChildren && (
           <div className="mt-1 sm:mt-2 text-emerald-500">
             <svg
-              className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 ${
+              className={`${sizes.chevron} transition-transform duration-300 ${
                 isExpanded ? "rotate-180" : ""
               }`}
               fill="none"
@@ -168,6 +217,7 @@ function OrgNode({
         isExpanded={isExpanded}
         hasChildren={hasChildren}
         onToggle={() => toggleNode(node.id)}
+        level={level}
       />
 
       {/* Children */}
