@@ -76,14 +76,16 @@ function MemberCard({
 }) {
   return (
     <div
-      className={`bg-white rounded-xl shadow-md border-2 border-emerald-200 p-4 min-w-[200px] max-w-[280px] ${
-        hasChildren ? "cursor-pointer hover:border-emerald-400 transition-colors" : ""
+      className={`bg-white rounded-xl shadow-md border-2 border-emerald-200 p-3 sm:p-4 min-w-[160px] max-w-[200px] sm:min-w-[200px] sm:max-w-[280px] min-h-[180px] sm:min-h-[200px] ${
+        hasChildren
+          ? "cursor-pointer hover:border-emerald-400 active:scale-95 active:shadow-sm transition-all duration-200 touch-manipulation"
+          : ""
       }`}
       onClick={hasChildren ? onToggle : undefined}
     >
       <div className="flex flex-col items-center text-center">
         {/* Avatar/Photo */}
-        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-3 overflow-hidden border-2 border-emerald-300">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-2 sm:mb-3 overflow-hidden border-2 border-emerald-300">
           {member.photoBase64 ? (
             <img
               src={member.photoBase64}
@@ -92,7 +94,7 @@ function MemberCard({
             />
           ) : (
             <svg
-              className="w-10 h-10 text-emerald-600"
+              className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600"
               fill="currentColor"
               viewBox="0 0 24 24"
             >
@@ -102,26 +104,26 @@ function MemberCard({
         </div>
 
         {/* Name - English */}
-        <h4 className="font-bold text-gray-900 text-sm">{member.nameEn}</h4>
+        <h4 className="font-bold text-gray-900 text-xs sm:text-sm">{member.nameEn}</h4>
         
         {/* Name - Kurdish */}
-        <p className="text-gray-600 text-sm font-medium" dir="rtl">
+        <p className="text-gray-600 text-xs sm:text-sm font-medium" dir="rtl">
           {member.nameKu}
         </p>
 
         {/* Title - English */}
-        <p className="text-emerald-700 text-xs mt-2">{member.titleEn}</p>
+        <p className="text-emerald-700 text-[10px] sm:text-xs mt-1 sm:mt-2">{member.titleEn}</p>
         
         {/* Title - Kurdish */}
-        <p className="text-emerald-600 text-xs" dir="rtl">
+        <p className="text-emerald-600 text-[10px] sm:text-xs" dir="rtl">
           {member.titleKu}
         </p>
 
         {/* Expand/Collapse indicator */}
         {hasChildren && (
-          <div className="mt-2 text-emerald-500">
+          <div className="mt-1 sm:mt-2 text-emerald-500">
             <svg
-              className={`w-5 h-5 transition-transform duration-300 ${
+              className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 ${
                 isExpanded ? "rotate-180" : ""
               }`}
               fill="none"
@@ -159,7 +161,7 @@ function OrgNode({
   const isExpanded = expandedNodes.has(node.id);
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-full relative pb-4 sm:pb-6">
       {/* The member card */}
       <MemberCard
         member={node}
@@ -170,30 +172,16 @@ function OrgNode({
 
       {/* Children */}
       {hasChildren && isExpanded && (
-        <div className="mt-4">
-          {/* Vertical line from parent */}
+        <div className="mt-4 sm:mt-6 flex flex-col items-center w-full relative">
+          {/* Vertical line from parent down to children */}
           <div className="flex justify-center">
-            <div className="w-0.5 h-6 bg-emerald-300" />
+            <div className="w-0.5 h-4 sm:h-6 bg-emerald-300" />
           </div>
 
-          {/* Horizontal line connecting children */}
-          {node.children.length > 1 && (
-            <div className="flex justify-center">
-              <div
-                className="h-0.5 bg-emerald-300"
-                style={{
-                  width: `${Math.min(node.children.length * 220, 900)}px`,
-                }}
-              />
-            </div>
-          )}
-
-          {/* Children nodes */}
-          <div className="flex flex-wrap justify-center gap-4 mt-2">
+          {/* Children container - using flexbox with wrapping for better variable height handling */}
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mt-2 sm:mt-4 w-full max-w-7xl px-2 sm:px-4">
             {node.children.map((child) => (
-              <div key={child.id} className="flex flex-col items-center">
-                {/* Vertical line to child */}
-                <div className="w-0.5 h-4 bg-emerald-300" />
+              <div key={child.id} className="flex flex-col items-center flex-[1_1_100%] sm:flex-[1_1_calc(50%-1.5rem)] lg:flex-[1_1_calc(33.333%-1.5rem)] xl:flex-[1_1_calc(25%-1.5rem)] min-w-[160px] sm:min-w-[200px] max-w-[280px]">
                 <OrgNode
                   node={child}
                   level={level + 1}
@@ -281,8 +269,8 @@ export default function OrgChart() {
   }
 
   return (
-    <div className="overflow-x-auto pb-8">
-      <div className="min-w-max flex flex-col items-center py-8 px-4">
+    <div className="w-full pb-8">
+      <div className="flex flex-col items-center py-4 sm:py-8 px-2 sm:px-4">
         {tree.map((root) => (
           <OrgNode
             key={root.id}
