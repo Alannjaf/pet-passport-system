@@ -251,7 +251,7 @@ function OrgNode({
                 <div 
                   className="absolute left-1/2 transform -translate-x-1/2 bg-emerald-500" 
                   style={{ 
-                    top: node.children.length > 1 ? '-25px' : '-25px',
+                    top: '-25px',
                     height: '25px', 
                     width: '2px',
                     zIndex: 0
