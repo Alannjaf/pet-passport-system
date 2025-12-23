@@ -8,11 +8,5 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Redirects for Next.js routing
-[[redirects]]
-  from = "/*"
-  to = "/404.html"
-  status = 404
-
 # Environment variables will be set in Netlify dashboard
 

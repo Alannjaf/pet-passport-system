@@ -1,0 +1,17 @@
+# robots.txt for Veterinarians Syndicate Pet Passport System
+
+# Allow all search engines to crawl public pages
+User-agent: *
+Allow: /
+Allow: /scan
+Allow: /view/
+
+# Disallow admin and sensitive areas
+Disallow: /syndicate/
+Disallow: /clinic/
+Disallow: /login
+Disallow: /api/
+
+# Sitemap (update with your actual domain when available)
+# Sitemap: https://vetsyndicate.krd/sitemap.xml
+
