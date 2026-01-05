@@ -62,18 +62,17 @@ export async function POST(request: NextRequest) {
       otherTreatments: otherData,
     } = body;
 
-    // Check if all passport sections are filled to lock them
+    // Check if all required passport sections are filled to lock them
+    // Note: Marking (transponder/tattoo) is optional and not required for locking
     const hasOwnerDetails = ownerName && ownerAddress;
     const hasAnimalDescription = petName && species;
-    const hasMarking = transponderCode || tattooCode;
     const hasIssuingInfo = issuingVetName || issuingVetAddress;
 
-    // Lock sections if clinic is creating and all sections are filled
+    // Lock sections if clinic is creating and all required sections are filled
     const shouldLock =
       session.user.role === "clinic" &&
       hasOwnerDetails &&
       hasAnimalDescription &&
-      hasMarking &&
       hasIssuingInfo;
 
     // Create pet profile
@@ -357,17 +356,16 @@ export async function PUT(request: NextRequest) {
         currentMedications,
       };
 
-      // If it's unlocked and clinic is updating with all sections filled, lock it
+      // If it's unlocked and clinic is updating with all required sections filled, lock it
+      // Note: Marking (transponder/tattoo) is optional and not required for locking
       if (!isLocked && isClinic) {
         const hasOwnerDetails = ownerName && ownerAddress;
         const hasAnimalDescription = petName && species;
-        const hasMarking = transponderCode || tattooCode;
         const hasIssuingInfo = issuingVetName || issuingVetAddress;
 
         if (
           hasOwnerDetails &&
           hasAnimalDescription &&
-          hasMarking &&
           hasIssuingInfo
         ) {
           updateData.passportSectionsLocked = "true";
