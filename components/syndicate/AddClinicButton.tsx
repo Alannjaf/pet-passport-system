@@ -127,8 +127,16 @@ export default function AddClinicButton() {
     doc.text('Generated on: ' + new Date().toLocaleString(), 105, 280, { align: 'center' })
     doc.text('Pet Passport System - Syndicate Administration', 105, 287, { align: 'center' })
     
-    // Save the PDF
-    doc.save(`${credentials.clinicName.replace(/[^a-z0-9]/gi, '_')}_credentials.pdf`)
+    // Save the PDF - sanitize filename while preserving Unicode characters
+    // Only remove filesystem-unsafe characters (path separators, control chars, etc.)
+    const sanitizedName = credentials.clinicName
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '') // Remove filesystem-unsafe characters
+      .replace(/\s+/g, '_')                  // Replace spaces with underscores
+      .replace(/_+/g, '_')                   // Collapse multiple underscores
+      .replace(/^_|_$/g, '')                 // Trim underscores from start/end
+      || 'clinic'                            // Fallback if name becomes empty
+    
+    doc.save(`${sanitizedName}_credentials.pdf`)
   }
 
   return (
