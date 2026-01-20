@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { db } from '@/lib/db'
-import { adminUsers, users } from '@/lib/db/schema'
+import { adminUsers, users, branchAssignments } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 
@@ -30,9 +30,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               id: 'admin',
               name: 'Syndicate Admin',
               role: 'syndicate',
+              assignedCityIds: [], // Admin has access to all cities
             }
           }
           return null
+        }
+
+        // Check admin users (branch heads)
+        const adminUser = await db
+          .select()
+          .from(adminUsers)
+          .where(eq(adminUsers.username, accountNumber))
+          .limit(1)
+
+        if (adminUser.length > 0) {
+          const admin = adminUser[0]
+          const isValidPassword = await bcrypt.compare(password, admin.password)
+          if (!isValidPassword) {
+            return null
+          }
+
+          // Get assigned cities for branch head
+          let assignedCityIds: number[] = []
+          if (admin.role === 'branch_head') {
+            const assignments = await db
+              .select({ cityId: branchAssignments.cityId })
+              .from(branchAssignments)
+              .where(eq(branchAssignments.userId, admin.id))
+            assignedCityIds = assignments.map(a => a.cityId)
+          }
+
+          return {
+            id: admin.id.toString(),
+            name: admin.username,
+            role: admin.role,
+            assignedCityIds,
+          }
         }
 
         // Check clinic users
@@ -64,6 +97,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: clinic.clinicName,
           role: 'clinic',
           accountNumber: clinic.accountNumber,
+          assignedCityIds: [],
         }
       },
     }),
@@ -73,6 +107,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.role = user.role
         token.accountNumber = user.accountNumber
+        token.assignedCityIds = user.assignedCityIds
       }
       return token
     },
@@ -81,6 +116,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as string
         session.user.id = token.sub as string
         session.user.accountNumber = token.accountNumber as string
+        session.user.assignedCityIds = token.assignedCityIds as number[]
       }
       return session
     },

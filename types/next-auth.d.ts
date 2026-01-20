@@ -7,12 +7,14 @@ declare module 'next-auth' {
       id: string
       role: string
       accountNumber?: string
+      assignedCityIds?: number[]
     } & DefaultSession['user']
   }
 
   interface User {
     role: string
     accountNumber?: string
+    assignedCityIds?: number[]
   }
 }
 
@@ -20,6 +22,7 @@ declare module 'next-auth/jwt' {
   interface JWT {
     role: string
     accountNumber?: string
+    assignedCityIds?: number[]
   }
 }
 

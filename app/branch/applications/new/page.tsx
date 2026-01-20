@@ -1,0 +1,135 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import VetApplicationForm from "@/components/VetApplicationForm";
+
+interface City {
+  id: number;
+  nameEn: string;
+  nameKu: string;
+  code: string;
+}
+
+export default function NewApplicationPage() {
+  const router = useRouter();
+  const [cities, setCities] = useState<City[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [success, setSuccess] = useState<{ trackingToken: string; applicationId: number } | null>(null);
+
+  useEffect(() => {
+    fetchCities();
+  }, []);
+
+  const fetchCities = async () => {
+    try {
+      // Fetch cities - the API will automatically filter to assigned cities for branch heads
+      const response = await fetch("/api/cities");
+      if (response.ok) {
+        const data = await response.json();
+        setCities(data);
+      }
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSuccess = (trackingToken: string, applicationId: number) => {
+    setSuccess({ trackingToken, applicationId });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Application Created!</h1>
+          <p className="text-gray-600 mb-6">
+            The application has been successfully created on behalf of the applicant.
+          </p>
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-500 mb-1">Tracking Token:</p>
+            <p className="font-mono text-sm text-emerald-600 break-all">{success.trackingToken}</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <Link
+              href={`/branch/applications/${success.applicationId}`}
+              className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium"
+            >
+              Review Application
+            </Link>
+            <Link
+              href="/branch/applications"
+              className="inline-block px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium"
+            >
+              Back to Applications
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (cities.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-6 py-8 rounded-xl text-center">
+          <svg className="w-12 h-12 mx-auto mb-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <h2 className="text-lg font-semibold mb-2">No Cities Assigned</h2>
+          <p className="text-sm">You don&apos;t have any cities assigned to your account. Please contact an administrator.</p>
+          <Link
+            href="/branch/applications"
+            className="inline-block mt-4 px-4 py-2 border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-100 transition"
+          >
+            Back to Applications
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+          <Link href="/branch/applications" className="hover:text-emerald-600">
+            Applications
+          </Link>
+          <span>/</span>
+          <span className="text-gray-900">New Application</span>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">Create New Application</h1>
+        <p className="text-gray-600 mt-1">
+          Fill out this form on behalf of a veterinary student who cannot register online.
+        </p>
+      </div>
+
+      {/* Form */}
+      <VetApplicationForm
+        cities={cities}
+        isAdminMode={true}
+        preselectedCityId={cities.length === 1 ? cities[0].id : undefined}
+        onSuccess={handleSuccess}
+        onCancel={() => router.push("/branch/applications")}
+      />
+    </div>
+  );
+}

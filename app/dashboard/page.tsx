@@ -16,6 +16,10 @@ export default async function DashboardPage() {
     redirect('/clinic/dashboard')
   }
 
+  if (session.user.role === 'branch_head') {
+    redirect('/branch/dashboard')
+  }
+
   redirect('/login')
 }
 

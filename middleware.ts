@@ -6,13 +6,21 @@ export default async function middleware(request: NextRequest) {
   const session = await auth()
   const { pathname } = request.nextUrl
 
-  // Protected routes
+  // Protected routes - Syndicate admin only
   if (pathname.startsWith('/syndicate')) {
     if (!session || session.user.role !== 'syndicate') {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 
+  // Protected routes - Branch head only
+  if (pathname.startsWith('/branch')) {
+    if (!session || session.user.role !== 'branch_head') {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+  }
+
+  // Protected routes - Clinic only
   if (pathname.startsWith('/clinic')) {
     if (!session || session.user.role !== 'clinic') {
       return NextResponse.redirect(new URL('/login', request.url))

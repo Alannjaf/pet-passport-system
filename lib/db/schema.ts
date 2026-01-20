@@ -6,12 +6,16 @@ import {
   serial,
   jsonb,
   pgEnum,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 // Enums
 export const userStatusEnum = pgEnum("user_status", ["active", "blocked"]);
 export const qrStatusEnum = pgEnum("qr_status", ["generated", "filled"]);
-export const roleEnum = pgEnum("role", ["syndicate", "clinic"]);
+export const roleEnum = pgEnum("role", ["syndicate", "clinic", "branch_head"]);
+export const vetApplicationStatusEnum = pgEnum("vet_application_status", ["pending", "approved", "rejected"]);
+export const vetMemberStatusEnum = pgEnum("vet_member_status", ["active", "suspended", "expired"]);
+export const renewalRequestStatusEnum = pgEnum("renewal_request_status", ["pending", "approved", "rejected"]);
 
 // Admin Users Table (Syndicate)
 export const adminUsers = pgTable("admin_users", {
@@ -182,6 +186,123 @@ export const syndicateMembers = pgTable("syndicate_members", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ============================================
+// VETERINARY SYNDICATE MEMBERSHIP TABLES
+// ============================================
+
+// Cities Table - Admin-managed list of syndicate branch cities
+export const cities = pgTable("cities", {
+  id: serial("id").primaryKey(),
+  nameEn: text("name_en").notNull(),
+  nameKu: text("name_ku").notNull(),
+  code: text("code").notNull().unique(),  // e.g., "ERB", "SLM", "DHK"
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Vet Applications Table - Stores all membership applications
+export const vetApplications = pgTable("vet_applications", {
+  id: serial("id").primaryKey(),
+  trackingToken: text("tracking_token").notNull().unique(), // UUID for status checking
+  
+  // Personal info
+  fullNameKu: text("full_name_ku").notNull(),       // Full name in Kurdish (4 names)
+  fullNameEn: text("full_name_en").notNull(),       // Full name in English (4 names)
+  dateOfBirth: text("date_of_birth").notNull(),
+  nationalIdNumber: text("national_id_number").notNull(),
+  nationalIdIssueDate: text("national_id_issue_date").notNull(),
+  nationality: text("nationality").notNull(),
+  marriageStatus: text("marriage_status").notNull(),
+  numberOfChildren: integer("number_of_children").default(0),
+  bloodType: text("blood_type").notNull(),
+  
+  // Education & Work
+  collegeCertificateBase64: text("college_certificate_base64").notNull(),
+  collegeFinishDate: text("college_finish_date").notNull(),
+  educationLevel: text("education_level").notNull(),
+  yearsAsEmployee: integer("years_as_employee").default(0),
+  jobType: text("job_type").notNull(),
+  jobLocation: text("job_location").notNull(),
+  
+  // Contact
+  currentLocation: text("current_location").notNull(),
+  phoneNumber: text("phone_number").notNull(),
+  emailAddress: text("email_address").notNull(),
+  cityId: integer("city_id").notNull(),  // FK to cities - which branch will handle this
+  
+  // Verification
+  confirmationChecked: boolean("confirmation_checked").default(false).notNull(),
+  signatureBase64: text("signature_base64").notNull(),
+  photoBase64: text("photo_base64").notNull(),
+  
+  // Status
+  status: vetApplicationStatusEnum("status").default("pending").notNull(),
+  rejectionReason: text("rejection_reason"),
+  reviewedBy: integer("reviewed_by"),  // FK to adminUsers
+  reviewedAt: timestamp("reviewed_at"),
+  
+  // Submission tracking (for admin/branch submissions on behalf of applicant)
+  submittedById: integer("submitted_by_id"),  // FK to adminUsers (null = self-submitted)
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Vet Members Table - Approved members with ID info
+export const vetMembers = pgTable("vet_members", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").notNull(),  // FK to vetApplications
+  memberId: text("member_id").notNull().unique(),      // Auto-generated: 00001, 00002...
+  
+  // Copied from application for ID card
+  fullNameKu: text("full_name_ku").notNull(),
+  fullNameEn: text("full_name_en").notNull(),
+  titleEn: text("title_en").notNull().default("Veterinarian"),
+  titleKu: text("title_ku").notNull().default("پزیشکی ئاژەڵان"),
+  dateOfBirth: text("date_of_birth").notNull(),
+  photoBase64: text("photo_base64").notNull(),
+  
+  // Additional member data (copied for reference)
+  nationalIdNumber: text("national_id_number"),
+  phoneNumber: text("phone_number"),
+  emailAddress: text("email_address"),
+  jobLocation: text("job_location"),
+  educationLevel: text("education_level"),
+  
+  // ID details
+  qrCodeId: text("qr_code_id").notNull().unique(),
+  issueDate: timestamp("issue_date").defaultNow().notNull(),
+  expiryDate: timestamp("expiry_date").notNull(),
+  
+  // Status
+  status: vetMemberStatusEnum("status").default("active").notNull(),
+  suspensionReason: text("suspension_reason"),
+  
+  // Management
+  cityId: integer("city_id").notNull(),  // FK to cities
+  createdBy: integer("created_by").notNull(),  // FK to adminUsers who approved
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedBy: integer("updated_by"),  // FK to adminUsers who last updated
+});
+
+// Branch Assignments Table - Links admin users to cities
+export const branchAssignments = pgTable("branch_assignments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),    // FK to adminUsers
+  cityId: integer("city_id").notNull(),    // FK to cities
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Renewal Requests Table - Track renewal requests from members
+export const renewalRequests = pgTable("renewal_requests", {
+  id: serial("id").primaryKey(),
+  memberId: integer("member_id").notNull(),  // FK to vetMembers
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  status: renewalRequestStatusEnum("status").default("pending").notNull(),
+  processedBy: integer("processed_by"),  // FK to adminUsers
+  processedAt: timestamp("processed_at"),
+  notes: text("notes"),
+});
+
 // Types
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type NewAdminUser = typeof adminUsers.$inferInsert;
@@ -205,3 +326,15 @@ export type OtherTreatment = typeof otherTreatments.$inferSelect;
 export type NewOtherTreatment = typeof otherTreatments.$inferInsert;
 export type SyndicateMember = typeof syndicateMembers.$inferSelect;
 export type NewSyndicateMember = typeof syndicateMembers.$inferInsert;
+
+// Vet Membership Types
+export type City = typeof cities.$inferSelect;
+export type NewCity = typeof cities.$inferInsert;
+export type VetApplication = typeof vetApplications.$inferSelect;
+export type NewVetApplication = typeof vetApplications.$inferInsert;
+export type VetMember = typeof vetMembers.$inferSelect;
+export type NewVetMember = typeof vetMembers.$inferInsert;
+export type BranchAssignment = typeof branchAssignments.$inferSelect;
+export type NewBranchAssignment = typeof branchAssignments.$inferInsert;
+export type RenewalRequest = typeof renewalRequests.$inferSelect;
+export type NewRenewalRequest = typeof renewalRequests.$inferInsert;

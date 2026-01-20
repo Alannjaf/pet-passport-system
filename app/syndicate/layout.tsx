@@ -29,36 +29,55 @@ export default async function SyndicateLayout({
                 <Image src="/Logo.svg" alt="Logo" width={40} height={40} />
                 <span className="hidden sm:inline">Syndicate</span>
               </Link>
-              <div className="hidden md:flex gap-4">
+              <div className="hidden md:flex gap-1">
                 <Link
                   href="/syndicate/dashboard"
-                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition text-sm"
                 >
                   Dashboard
                 </Link>
                 <Link
                   href="/syndicate/clinics"
-                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition text-sm"
                 >
                   Clinics
                 </Link>
                 <Link
                   href="/syndicate/members"
-                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition text-sm"
                 >
-                  Members
+                  Org Chart
                 </Link>
                 <Link
                   href="/syndicate/qr-generator"
-                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition text-sm"
                 >
                   QR Generator
                 </Link>
+                <span className="border-l border-gray-300 mx-1"></span>
                 <Link
-                  href="/syndicate/qr-history"
-                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition"
+                  href="/syndicate/cities"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition text-sm"
                 >
-                  QR History
+                  Cities
+                </Link>
+                <Link
+                  href="/syndicate/branch-users"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition text-sm"
+                >
+                  Branch Users
+                </Link>
+                <Link
+                  href="/syndicate/vet-applications"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition text-sm"
+                >
+                  Vet Applications
+                </Link>
+                <Link
+                  href="/syndicate/vet-members"
+                  className="px-3 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded transition text-sm"
+                >
+                  Vet Members
                 </Link>
               </div>
             </div>
