@@ -2,7 +2,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/lib/auth/auth";
 import LogoutButton from "@/components/LogoutButton";
-import OrgChart from "@/components/OrgChart";
+import dynamic from "next/dynamic";
+
+const OrgChart = dynamic(() => import("@/components/OrgChart"), {
+  loading: () => (
+    <div className="flex justify-center items-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600" />
+    </div>
+  ),
+});
 
 export default async function Home() {
   const session = await auth();

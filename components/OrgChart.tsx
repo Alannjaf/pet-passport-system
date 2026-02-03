@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 
 interface Member {
   id: number;
@@ -327,7 +327,7 @@ export default function OrgChart() {
     });
   };
 
-  const tree = buildTree(members);
+  const tree = useMemo(() => buildTree(members), [members]);
 
   if (loading) {
     return (

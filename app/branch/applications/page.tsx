@@ -30,21 +30,33 @@ export default function BranchApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 25;
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter]);
 
   useEffect(() => {
     fetchApplications();
-  }, [filter]);
+  }, [filter, page]);
 
   const fetchApplications = async () => {
     setLoading(true);
     try {
-      const url = filter === "all"
-        ? "/api/vet-applications"
-        : `/api/vet-applications?status=${filter}`;
+      const params = new URLSearchParams();
+      if (filter !== "all") params.append("status", filter);
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      const url = `/api/vet-applications?${params.toString()}`;
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        setApplications(data);
+        setApplications(data.data);
+        setTotal(data.total);
       }
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -52,6 +64,28 @@ export default function BranchApplicationsPage() {
       setLoading(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/vet-applications/${deleteId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete");
+      }
+      setApplications((prev) => prev.filter((a) => a.id !== deleteId));
+    } catch (error) {
+      console.error("Error deleting application:", error);
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
+    }
+  };
+
+  const totalPages = Math.ceil(total / limit);
 
   const statusColors = {
     pending: "bg-amber-100 text-amber-800",
@@ -157,23 +191,91 @@ export default function BranchApplicationsPage() {
                     {formatDate(app.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <Link
-                      href={`/branch/applications/${app.id}`}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                        app.status === "pending"
-                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {app.status === "pending" ? "Review" : "View"}
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/branch/applications/${app.id}`}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                          app.status === "pending"
+                            ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        {app.status === "pending" ? "Review" : "View"}
+                      </Link>
+                      <Link
+                        href={`/branch/applications/${app.id}/edit`}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => setDeleteId(app.id)}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 transition"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 transition"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Delete Application
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to permanently delete this application? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

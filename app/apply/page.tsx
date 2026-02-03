@@ -198,18 +198,27 @@ export default function ApplyPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h1>
-            <p className="text-gray-600 mb-6">
-              Your application has been submitted successfully. You will receive an email with a link to track your application status.
+            <p className="text-gray-600 mb-4">
+              Your application has been submitted successfully.
             </p>
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-500 mb-1">Your Tracking Token:</p>
-              <p className="font-mono text-lg text-emerald-600 break-all">{trackingToken}</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
+              <p className="text-sm font-medium text-amber-800 mb-1">
+                Please save this link to track your application:
+              </p>
+              <p dir="rtl" className="text-sm font-medium text-amber-800 mb-3">
+                تکایە ئەم لینکە هەڵبگرە بۆ شوێنکەوتنی داواکاریەکەت:
+              </p>
+              <div className="bg-white rounded border border-amber-200 p-3">
+                <p className="font-mono text-sm text-emerald-600 break-all select-all">
+                  {typeof window !== "undefined" ? `${window.location.origin}/application-status/${trackingToken}` : `/application-status/${trackingToken}`}
+                </p>
+              </div>
             </div>
             <Link
               href={`/application-status/${trackingToken}`}
               className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-medium"
             >
-              Check Application Status
+              Check Application Status / شوێنکەوتنی داواکاری
             </Link>
           </div>
         </div>

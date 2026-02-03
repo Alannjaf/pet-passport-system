@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { syndicateMembers } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { asc, eq } from "drizzle-orm";
+import { validateBase64Fields } from "@/lib/utils/validation";
 
 // GET - Fetch all members (public)
 export async function GET() {
@@ -12,7 +13,11 @@ export async function GET() {
       .from(syndicateMembers)
       .orderBy(asc(syndicateMembers.displayOrder));
 
-    return NextResponse.json(members);
+    return NextResponse.json(members, {
+      headers: {
+        "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1200",
+      },
+    });
   } catch (error) {
     console.error("Error fetching syndicate members:", error);
     return NextResponse.json(
@@ -54,6 +59,11 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    const base64Error = validateBase64Fields(body, ['photoBase64'])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
     }
 
     const [newMember] = await db

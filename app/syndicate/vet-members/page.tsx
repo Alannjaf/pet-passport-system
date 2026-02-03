@@ -34,14 +34,21 @@ export default function SyndicateMembersPage() {
   const [filter, setFilter] = useState<"all" | "active" | "suspended" | "expired">("all");
   const [cityFilter, setCityFilter] = useState<string>("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 25;
 
   useEffect(() => {
     fetchCities();
   }, []);
 
   useEffect(() => {
-    fetchMembers();
+    setPage(1);
   }, [filter, cityFilter]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [filter, cityFilter, page]);
 
   const fetchCities = async () => {
     try {
@@ -63,12 +70,15 @@ export default function SyndicateMembersPage() {
       if (filter !== "all") params.append("status", filter);
       if (cityFilter) params.append("cityId", cityFilter);
       if (search) params.append("search", search);
-      if (params.toString()) url += `?${params.toString()}`;
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      url += `?${params.toString()}`;
 
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        setMembers(data);
+        setMembers(data.data);
+        setTotal(data.total);
       }
     } catch (error) {
       console.error("Error fetching members:", error);
@@ -79,8 +89,11 @@ export default function SyndicateMembersPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setPage(1);
     fetchMembers();
   };
+
+  const totalPages = Math.ceil(total / limit);
 
   const isExpiringSoon = (expiryDate: string) => {
     const expiry = new Date(expiryDate);
@@ -254,6 +267,31 @@ export default function SyndicateMembersPage() {
               ))}
             </tbody>
           </table>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 transition"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 transition"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

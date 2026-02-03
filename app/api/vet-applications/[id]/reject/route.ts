@@ -4,6 +4,7 @@ import { vetApplications } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq } from "drizzle-orm";
 import { sendEmail, applicationRejectedEmail } from "@/lib/email/send";
+import { auditLog } from '@/lib/utils/audit';
 
 // POST - Reject application
 export async function POST(
@@ -83,6 +84,8 @@ export async function POST(
       subject: emailContent.subject,
       html: emailContent.html,
     });
+
+    auditLog({ action: 'application.rejected', actorId: session.user.id, actorRole: session.user.role, targetId: id, targetType: 'application' })
 
     return NextResponse.json({
       message: "Application rejected",

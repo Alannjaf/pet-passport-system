@@ -59,12 +59,21 @@ export default function NewApplicationPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Application Created!</h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4">
             The application has been successfully created on behalf of the applicant.
           </p>
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-500 mb-1">Tracking Token:</p>
-            <p className="font-mono text-sm text-emerald-600 break-all">{success.trackingToken}</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
+            <p className="text-sm font-medium text-amber-800 mb-1">
+              Please save this link to track the application:
+            </p>
+            <p dir="rtl" className="text-sm font-medium text-amber-800 mb-3">
+              تکایە ئەم لینکە هەڵبگرە بۆ شوێنکەوتنی داواکاریەکە:
+            </p>
+            <div className="bg-white rounded border border-amber-200 p-3">
+              <p className="font-mono text-sm text-emerald-600 break-all select-all">
+                {typeof window !== "undefined" ? `${window.location.origin}/application-status/${success.trackingToken}` : `/application-status/${success.trackingToken}`}
+              </p>
+            </div>
           </div>
           <div className="flex flex-col gap-3">
             <Link

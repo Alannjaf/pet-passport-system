@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vetMembers, cities } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq } from "drizzle-orm";
+import { validateBase64Fields } from "@/lib/utils/validation";
 
 // GET - Fetch single member
 export async function GET(
@@ -100,13 +101,19 @@ export async function PUT(
       fullNameEn,
       titleEn,
       titleKu,
+      titleAr,
       dateOfBirth,
       photoBase64,
       phoneNumber,
       emailAddress,
       jobLocation,
-      educationLevel,
+      scientificRank,
     } = body;
+
+    const base64Error = validateBase64Fields(body, ['photoBase64'])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
+    }
 
     // Update member
     const [updatedMember] = await db
@@ -116,12 +123,13 @@ export async function PUT(
         fullNameEn: fullNameEn || existingMember.fullNameEn,
         titleEn: titleEn || existingMember.titleEn,
         titleKu: titleKu || existingMember.titleKu,
+        titleAr: titleAr !== undefined ? titleAr : existingMember.titleAr,
         dateOfBirth: dateOfBirth || existingMember.dateOfBirth,
         photoBase64: photoBase64 || existingMember.photoBase64,
         phoneNumber: phoneNumber !== undefined ? phoneNumber : existingMember.phoneNumber,
         emailAddress: emailAddress !== undefined ? emailAddress : existingMember.emailAddress,
         jobLocation: jobLocation !== undefined ? jobLocation : existingMember.jobLocation,
-        educationLevel: educationLevel !== undefined ? educationLevel : existingMember.educationLevel,
+        scientificRank: scientificRank !== undefined ? scientificRank : existingMember.scientificRank,
         updatedAt: new Date(),
         updatedBy: parseInt(session.user.id) || null,
       })

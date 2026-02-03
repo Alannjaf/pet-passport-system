@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vetApplications, cities, branchAssignments } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
-import { eq, desc, inArray, and } from "drizzle-orm";
+import { eq, desc, inArray, and, count } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendEmail, applicationSubmittedEmail } from "@/lib/email/send";
+import { validateBase64Fields, safeParseInt } from "@/lib/utils/validation";
+import { rateLimit } from "@/lib/utils/rate-limit";
 
 // GET - Fetch applications (branch/admin only, filtered by city for branch heads)
 export async function GET(request: NextRequest) {
@@ -17,6 +19,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const cityId = searchParams.get("cityId");
+    const page = Math.max(1, safeParseInt(searchParams.get("page"), 1))
+    const limit = Math.min(100, Math.max(1, safeParseInt(searchParams.get("limit"), 25)))
+    const offset = (page - 1) * limit;
 
     // Build query conditions
     let conditions = [];
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest) {
       // Branch heads can only see their assigned cities
       const assignedCityIds = session.user.assignedCityIds || [];
       if (assignedCityIds.length === 0) {
-        return NextResponse.json([]); // No cities assigned
+        return NextResponse.json({ data: [], total: 0, page, limit });
       }
       conditions.push(inArray(vetApplications.cityId, assignedCityIds));
     } else if (cityId) {
@@ -39,35 +44,41 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(vetApplications.cityId, parseInt(cityId)));
     }
 
-    // Execute query
-    const applications = await db
-      .select({
-        id: vetApplications.id,
-        trackingToken: vetApplications.trackingToken,
-        fullNameKu: vetApplications.fullNameKu,
-        fullNameEn: vetApplications.fullNameEn,
-        emailAddress: vetApplications.emailAddress,
-        phoneNumber: vetApplications.phoneNumber,
-        cityId: vetApplications.cityId,
-        status: vetApplications.status,
-        rejectionReason: vetApplications.rejectionReason,
-        createdAt: vetApplications.createdAt,
-        reviewedAt: vetApplications.reviewedAt,
-      })
-      .from(vetApplications)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(vetApplications.createdAt));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Get city info for each application
-    const allCities = await db.select().from(cities);
-    const citiesMap = new Map(allCities.map((c) => [c.id, c]));
+    // Get total count and paginated data in parallel
+    const [countResult, results] = await Promise.all([
+      db.select({ total: count() }).from(vetApplications).where(whereClause),
+      db
+        .select({
+          id: vetApplications.id,
+          trackingToken: vetApplications.trackingToken,
+          fullNameKu: vetApplications.fullNameKu,
+          fullNameEn: vetApplications.fullNameEn,
+          emailAddress: vetApplications.emailAddress,
+          phoneNumber: vetApplications.phoneNumber,
+          cityId: vetApplications.cityId,
+          status: vetApplications.status,
+          rejectionReason: vetApplications.rejectionReason,
+          createdAt: vetApplications.createdAt,
+          reviewedAt: vetApplications.reviewedAt,
+          city: cities,
+        })
+        .from(vetApplications)
+        .leftJoin(cities, eq(vetApplications.cityId, cities.id))
+        .where(whereClause)
+        .orderBy(desc(vetApplications.createdAt))
+        .limit(limit)
+        .offset(offset),
+    ]);
 
-    const applicationsWithCity = applications.map((app) => ({
+    const total = countResult[0]?.total || 0;
+    const applicationsWithCity = results.map(({ city, ...app }) => ({
       ...app,
-      city: citiesMap.get(app.cityId) || null,
+      city: city || null,
     }));
 
-    return NextResponse.json(applicationsWithCity);
+    return NextResponse.json({ data: applicationsWithCity, total, page, limit });
   } catch (error) {
     console.error("Error fetching applications:", error);
     return NextResponse.json(
@@ -80,6 +91,12 @@ export async function GET(request: NextRequest) {
 // POST - Submit new application (public or admin/branch on behalf)
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const rl = rateLimit(`application:${ip}`, 3, 60 * 60 * 1000)
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 })
+    }
+
     const body = await request.json();
     
     // Check if this is an admin/branch submission
@@ -107,14 +124,9 @@ export async function POST(request: NextRequest) {
       "fullNameEn",
       "dateOfBirth",
       "nationalIdNumber",
-      "nationalIdIssueDate",
-      "nationality",
       "marriageStatus",
       "bloodType",
       "collegeCertificateBase64",
-      "collegeFinishDate",
-      "educationLevel",
-      "jobType",
       "jobLocation",
       "currentLocation",
       "phoneNumber",
@@ -145,6 +157,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate university degrees - at least one complete entry required
+    if (body.universityDegrees) {
+      try {
+        const degrees = typeof body.universityDegrees === "string"
+          ? JSON.parse(body.universityDegrees)
+          : body.universityDegrees;
+        if (!Array.isArray(degrees) || degrees.length === 0) {
+          return NextResponse.json(
+            { error: "At least one university degree is required" },
+            { status: 400 }
+          );
+        }
+        const first = degrees[0];
+        if (!first.degreeName || !first.universityName || !first.graduationYear) {
+          return NextResponse.json(
+            { error: "Please complete all fields for the first university degree (degree name, university name, and graduation year)" },
+            { status: 400 }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid university degrees format" },
+          { status: 400 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: "At least one university degree is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate info card is required when marriage status is "Married"
+    if (body.marriageStatus === "Married" && !body.infoCardBase64) {
+      return NextResponse.json(
+        { error: "Information card is required for married applicants" },
+        { status: 400 }
+      );
+    }
+
     // Validate city exists
     const [city] = await db
       .select()
@@ -158,6 +210,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const base64Error = validateBase64Fields(body, [
+      'collegeCertificateBase64',
+      'photoBase64',
+      'signatureBase64',
+      'nationalIdCardBase64',
+      'infoCardBase64',
+      'recommendationLetterBase64',
+    ])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
+    }
+
     // Generate unique tracking token
     const trackingToken = uuidv4();
 
@@ -169,22 +233,25 @@ export async function POST(request: NextRequest) {
         fullNameKu: body.fullNameKu,
         fullNameEn: body.fullNameEn,
         dateOfBirth: body.dateOfBirth,
+        placeOfBirth: body.placeOfBirth || null,
         nationalIdNumber: body.nationalIdNumber,
-        nationalIdIssueDate: body.nationalIdIssueDate,
-        nationality: body.nationality,
+        nationalIdDate: body.nationalIdDate || null,
         marriageStatus: body.marriageStatus,
         numberOfChildren: body.numberOfChildren || 0,
         bloodType: body.bloodType,
+        universityDegrees: body.universityDegrees || null,
+        scientificRank: body.scientificRank || null,
         collegeCertificateBase64: body.collegeCertificateBase64,
-        collegeFinishDate: body.collegeFinishDate,
-        educationLevel: body.educationLevel,
-        yearsAsEmployee: body.yearsAsEmployee || 0,
-        jobType: body.jobType,
         jobLocation: body.jobLocation,
+        yearOfEmployment: body.yearOfEmployment || null,
+        privateWorkDetails: body.privateWorkDetails || null,
         currentLocation: body.currentLocation,
         phoneNumber: body.phoneNumber,
         emailAddress: body.emailAddress,
         cityId: body.cityId,
+        nationalIdCardBase64: body.nationalIdCardBase64 || null,
+        infoCardBase64: body.infoCardBase64 || null,
+        recommendationLetterBase64: body.recommendationLetterBase64 || null,
         confirmationChecked: isAdminSubmission ? true : body.confirmationChecked,
         signatureBase64: body.signatureBase64 || "",
         photoBase64: body.photoBase64,

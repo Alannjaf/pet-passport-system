@@ -2,27 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cities } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 // GET - Fetch all cities (public for application form, shows all for admin)
 export async function GET() {
   try {
     const session = await auth();
-    
+
     // If admin, show all cities; otherwise only active ones
     const isAdmin = session?.user?.role === "syndicate";
-    
-    const allCities = await db
-      .select()
-      .from(cities)
-      .orderBy(asc(cities.nameEn));
 
-    // For non-admins, filter to only active cities
-    const filteredCities = isAdmin 
-      ? allCities 
-      : allCities.filter(c => c.isActive);
+    const filteredCities = isAdmin
+      ? await db.select().from(cities).orderBy(asc(cities.nameEn))
+      : await db.select().from(cities).where(eq(cities.isActive, true)).orderBy(asc(cities.nameEn));
 
-    return NextResponse.json(filteredCities);
+    return NextResponse.json(filteredCities, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Error fetching cities:", error);
     return NextResponse.json(

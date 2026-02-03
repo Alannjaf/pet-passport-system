@@ -209,26 +209,31 @@ export const vetApplications = pgTable("vet_applications", {
   fullNameKu: text("full_name_ku").notNull(),       // Full name in Kurdish (4 names)
   fullNameEn: text("full_name_en").notNull(),       // Full name in English (4 names)
   dateOfBirth: text("date_of_birth").notNull(),
+  placeOfBirth: text("place_of_birth"),             // NEW: Place of birth
   nationalIdNumber: text("national_id_number").notNull(),
-  nationalIdIssueDate: text("national_id_issue_date").notNull(),
-  nationality: text("nationality").notNull(),
+  nationalIdDate: text("national_id_date"),              // Date of national ID
   marriageStatus: text("marriage_status").notNull(),
   numberOfChildren: integer("number_of_children").default(0),
   bloodType: text("blood_type").notNull(),
   
   // Education & Work
+  universityDegrees: text("university_degrees"),    // NEW: JSON array of degrees
+  scientificRank: text("scientific_rank"),          // NEW: Academic/scientific rank
   collegeCertificateBase64: text("college_certificate_base64").notNull(),
-  collegeFinishDate: text("college_finish_date").notNull(),
-  educationLevel: text("education_level").notNull(),
-  yearsAsEmployee: integer("years_as_employee").default(0),
-  jobType: text("job_type").notNull(),
-  jobLocation: text("job_location").notNull(),
+  jobLocation: text("job_location").notNull(),      // Current workplace
+  yearOfEmployment: text("year_of_employment"),     // NEW: Year of employment at office
+  privateWorkDetails: text("private_work_details"), // NEW: Type & location of private work
   
   // Contact
-  currentLocation: text("current_location").notNull(),
+  currentLocation: text("current_location").notNull(), // Place of residence
   phoneNumber: text("phone_number").notNull(),
   emailAddress: text("email_address").notNull(),
   cityId: integer("city_id").notNull(),  // FK to cities - which branch will handle this
+  
+  // Attachments
+  nationalIdCardBase64: text("national_id_card_base64"),     // NEW: National ID card copy
+  infoCardBase64: text("info_card_base64"),                  // NEW: Information card copy
+  recommendationLetterBase64: text("recommendation_letter_base64"), // NEW: Recommendation letter
   
   // Verification
   confirmationChecked: boolean("confirmation_checked").default(false).notNull(),
@@ -258,6 +263,7 @@ export const vetMembers = pgTable("vet_members", {
   fullNameEn: text("full_name_en").notNull(),
   titleEn: text("title_en").notNull().default("Veterinarian"),
   titleKu: text("title_ku").notNull().default("پزیشکی ئاژەڵان"),
+  titleAr: text("title_ar").default("طبيب بيطري"),
   dateOfBirth: text("date_of_birth").notNull(),
   photoBase64: text("photo_base64").notNull(),
   
@@ -266,7 +272,7 @@ export const vetMembers = pgTable("vet_members", {
   phoneNumber: text("phone_number"),
   emailAddress: text("email_address"),
   jobLocation: text("job_location"),
-  educationLevel: text("education_level"),
+  scientificRank: text("scientific_rank"),  // NEW: Academic/scientific rank
   
   // ID details
   qrCodeId: text("qr_code_id").notNull().unique(),

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { syndicateMembers } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq } from "drizzle-orm";
+import { validateBase64Fields } from "@/lib/utils/validation";
 
 // Helper function to check for circular references
 async function wouldCreateCycle(memberId: number, newParentId: number): Promise<boolean> {
@@ -122,6 +123,11 @@ export async function PUT(
           { status: 400 }
         );
       }
+    }
+
+    const base64Error = validateBase64Fields(body, ['photoBase64'])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
     }
 
     const [updatedMember] = await db

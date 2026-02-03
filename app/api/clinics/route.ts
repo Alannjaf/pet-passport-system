@@ -3,22 +3,7 @@ import { auth } from '@/lib/auth/auth'
 import { db } from '@/lib/db'
 import { users } from '@/lib/db/schema'
 import bcrypt from 'bcryptjs'
-
-// Generate random account number
-function generateAccountNumber() {
-  const randomNum = Math.floor(10000 + Math.random() * 90000)
-  return `CLN-${randomNum}`
-}
-
-// Generate random password
-function generatePassword() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
-  let password = ''
-  for (let i = 0; i < 10; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return password
-}
+import { generateAccountNumber, generatePassword } from '@/lib/utils/crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,9 +34,10 @@ export async function POST(request: NextRequest) {
       createdBy: 'syndicate',
     }).returning()
 
+    const { password: _hash, ...clinicSafe } = newClinic[0]
     return NextResponse.json({
       success: true,
-      clinic: newClinic[0],
+      clinic: clinicSafe,
       credentials: {
         accountNumber,
         password: plainPassword,

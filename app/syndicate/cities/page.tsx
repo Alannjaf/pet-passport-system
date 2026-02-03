@@ -297,7 +297,7 @@ export default function CitiesPage() {
             {cities.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                  No cities added yet. Click "Add City" to create your first branch city.
+                  No cities added yet. Click &ldquo;Add City&rdquo; to create your first branch city.
                 </td>
               </tr>
             ) : (

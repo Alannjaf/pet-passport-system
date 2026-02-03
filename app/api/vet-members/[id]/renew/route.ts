@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vetMembers, renewalRequests } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq } from "drizzle-orm";
+import { auditLog } from '@/lib/utils/audit';
 
 // POST - Renew member's ID (extend expiry by 1 year)
 export async function POST(
@@ -76,6 +77,8 @@ export async function POST(
         })
         .where(eq(renewalRequests.id, body.renewalRequestId));
     }
+
+    auditLog({ action: 'member.renewed', actorId: session.user.id, actorRole: session.user.role, targetId: id, targetType: 'member' })
 
     return NextResponse.json({
       message: "Membership renewed successfully",

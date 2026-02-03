@@ -4,6 +4,8 @@ import { adminUsers, branchAssignments, cities } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { validatePasswordStrength } from "@/lib/utils/crypto";
+import { auditLog } from '@/lib/utils/audit';
 
 // GET - Fetch all branch head users with their city assignments
 export async function GET() {
@@ -73,11 +75,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
+    const validation = validatePasswordStrength(password);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     // Hash password
@@ -102,6 +102,8 @@ export async function POST(request: NextRequest) {
         }))
       );
     }
+
+    auditLog({ action: 'branch_user.created', actorId: session.user.id, actorRole: session.user.role, targetId: newUser.id, targetType: 'branch_user' })
 
     // Return user without password
     return NextResponse.json(

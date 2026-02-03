@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vetMembers } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq } from "drizzle-orm";
+import { auditLog } from '@/lib/utils/audit';
 
 // POST - Suspend or unsuspend member
 export async function POST(
@@ -62,6 +63,8 @@ export async function POST(
         })
         .where(eq(vetMembers.id, memberId));
 
+      auditLog({ action: 'member.suspended', actorId: session.user.id, actorRole: session.user.role, targetId: id, targetType: 'member' })
+
       return NextResponse.json({ message: "Member suspended successfully" });
     } else {
       // Unsuspend (reactivate) member
@@ -74,6 +77,8 @@ export async function POST(
           updatedBy: parseInt(session.user.id) || null,
         })
         .where(eq(vetMembers.id, memberId));
+
+      auditLog({ action: 'member.suspended', actorId: session.user.id, actorRole: session.user.role, targetId: id, targetType: 'member' })
 
       return NextResponse.json({ message: "Member reactivated successfully" });
     }

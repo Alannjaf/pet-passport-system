@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import QRCode from 'qrcode'
-import { jsPDF } from 'jspdf'
 
 export default function QRGeneratorPage() {
   const [quantity, setQuantity] = useState(10)
@@ -41,7 +40,8 @@ export default function QRGeneratorPage() {
     }
   }
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
+    const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF()
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()

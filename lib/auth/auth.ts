@@ -25,12 +25,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Check if it's admin credentials
         if (accountNumber === process.env.ADMIN_USERNAME) {
-          if (password === process.env.ADMIN_PASSWORD) {
+          const adminHash = process.env.ADMIN_PASSWORD_HASH
+          if (!adminHash) {
+            console.error('ADMIN_PASSWORD_HASH environment variable is not set')
+            return null
+          }
+          const isValid = await bcrypt.compare(password, adminHash)
+          if (isValid) {
             return {
               id: 'admin',
               name: 'Syndicate Admin',
               role: 'syndicate',
-              assignedCityIds: [], // Admin has access to all cities
+              assignedCityIds: [],
             }
           }
           return null
@@ -109,9 +115,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.accountNumber = user.accountNumber
         token.assignedCityIds = user.assignedCityIds
       }
+
+      // Re-check clinic status on each request
+      if (token.role === 'clinic' && token.sub && token.sub !== 'admin') {
+        try {
+          const [clinic] = await db
+            .select({ status: users.status })
+            .from(users)
+            .where(eq(users.id, parseInt(token.sub)))
+            .limit(1)
+
+          if (clinic && clinic.status === 'blocked') {
+            token.blocked = true
+          }
+        } catch {
+          // If DB check fails, don't block the user
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
+      if (token.blocked) {
+        session.user.role = 'blocked'
+        return session
+      }
       if (session.user) {
         session.user.role = token.role as string
         session.user.id = token.sub as string
@@ -126,6 +154,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: 'jwt',
+    maxAge: 8 * 60 * 60, // 8 hours
   },
 })
 
