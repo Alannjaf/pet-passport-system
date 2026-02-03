@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import jsPDF from 'jspdf'
 
 export default function AddClinicButton() {
   const router = useRouter()
@@ -45,9 +44,10 @@ export default function AddClinicButton() {
     router.refresh()
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!credentials) return
 
+    const { default: jsPDF } = await import("jspdf");
     const doc = new jsPDF()
     
     // Set font

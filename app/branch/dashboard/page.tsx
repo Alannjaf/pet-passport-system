@@ -46,10 +46,10 @@ export default function BranchDashboardPage() {
 
   const fetchRecentApplications = async () => {
     try {
-      const response = await fetch("/api/vet-applications?status=pending");
+      const response = await fetch("/api/vet-applications?status=pending&limit=5");
       if (response.ok) {
         const data = await response.json();
-        setRecentApplications(data.slice(0, 5));
+        setRecentApplications(data.data);
       }
     } catch (error) {
       console.error("Error fetching applications:", error);

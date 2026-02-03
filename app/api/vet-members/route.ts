@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vetMembers, cities } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
-import { eq, desc, inArray, and, or, ilike } from "drizzle-orm";
+import { eq, desc, inArray, and, or, ilike, sql, count } from "drizzle-orm";
 
-// GET - Fetch all members (branch/admin only, filtered by city for branch heads)
+// GET - Fetch members with pagination (branch/admin only, filtered by city for branch heads)
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -16,6 +16,9 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const cityId = searchParams.get("cityId");
     const search = searchParams.get("search");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "25")));
+    const offset = (page - 1) * limit;
 
     // Build query conditions
     let conditions = [];
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
     if (session.user.role === "branch_head") {
       const assignedCityIds = session.user.assignedCityIds || [];
       if (assignedCityIds.length === 0) {
-        return NextResponse.json([]); // No cities assigned
+        return NextResponse.json({ data: [], total: 0, page, limit });
       }
       conditions.push(inArray(vetMembers.cityId, assignedCityIds));
     } else if (cityId) {
@@ -47,23 +50,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Execute query
-    const members = await db
-      .select()
-      .from(vetMembers)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(vetMembers.issueDate));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Get city info for each member
-    const allCities = await db.select().from(cities);
-    const citiesMap = new Map(allCities.map((c) => [c.id, c]));
+    // Get total count and paginated data in parallel
+    const [countResult, results] = await Promise.all([
+      db.select({ total: count() }).from(vetMembers).where(whereClause),
+      db
+        .select({
+          member: vetMembers,
+          city: cities,
+        })
+        .from(vetMembers)
+        .leftJoin(cities, eq(vetMembers.cityId, cities.id))
+        .where(whereClause)
+        .orderBy(desc(vetMembers.issueDate))
+        .limit(limit)
+        .offset(offset),
+    ]);
 
-    const membersWithCity = members.map((member) => ({
+    const total = countResult[0]?.total || 0;
+    const membersWithCity = results.map(({ member, city }) => ({
       ...member,
-      city: citiesMap.get(member.cityId) || null,
+      city: city || null,
     }));
 
-    return NextResponse.json(membersWithCity);
+    return NextResponse.json({ data: membersWithCity, total, page, limit });
   } catch (error) {
     console.error("Error fetching members:", error);
     return NextResponse.json(

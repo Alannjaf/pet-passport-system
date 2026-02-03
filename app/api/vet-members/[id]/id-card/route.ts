@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import QRCode from "qrcode";
 
 // QR Code cache - stores generated QR codes to avoid regenerating for the same data
+const MAX_CACHE_SIZE = 500;
 const qrCodeCache = new Map<string, string>();
 
 // GET - Return member data for ID card generation
@@ -49,26 +50,37 @@ export async function GET(
         margin: 1,
         errorCorrectionLevel: "M",
       });
+      if (qrCodeCache.size >= MAX_CACHE_SIZE) {
+        const firstKey = qrCodeCache.keys().next().value;
+        if (firstKey) qrCodeCache.delete(firstKey);
+      }
       qrCodeCache.set(verifyUrl, qrDataUrl);
     }
 
     // Return JSON data for client-side rendering
-    return NextResponse.json({
-      id: member.id,
-      memberId: member.memberId,
-      fullNameKu: member.fullNameKu,
-      fullNameEn: member.fullNameEn,
-      titleKu: member.titleKu,
-      titleEn: member.titleEn,
-      titleAr: member.titleAr,
-      dateOfBirth: member.dateOfBirth,
-      photoBase64: member.photoBase64,
-      qrCodeId: member.qrCodeId,
-      issueDate: member.issueDate,
-      expiryDate: member.expiryDate,
-      cityCode: city?.code || null,
-      qrDataUrl: qrDataUrl,
-    });
+    return NextResponse.json(
+      {
+        id: member.id,
+        memberId: member.memberId,
+        fullNameKu: member.fullNameKu,
+        fullNameEn: member.fullNameEn,
+        titleKu: member.titleKu,
+        titleEn: member.titleEn,
+        titleAr: member.titleAr,
+        dateOfBirth: member.dateOfBirth,
+        photoBase64: member.photoBase64,
+        qrCodeId: member.qrCodeId,
+        issueDate: member.issueDate,
+        expiryDate: member.expiryDate,
+        cityCode: city?.code || null,
+        qrDataUrl: qrDataUrl,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching member data:", error);
     return NextResponse.json(

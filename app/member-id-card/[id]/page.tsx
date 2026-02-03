@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { toPng } from "html-to-image";
-import { jsPDF } from "jspdf";
 
 interface MemberData {
   id: number;
@@ -66,6 +64,11 @@ export default function MemberIdCardPage() {
     setDownloading(true);
 
     try {
+      const [{ toPng }, { jsPDF }] = await Promise.all([
+        import("html-to-image"),
+        import("jspdf"),
+      ]);
+
       const scale = 2;
 
       const frontImage = await toPng(frontCardRef.current, {
@@ -139,16 +142,6 @@ export default function MemberIdCardPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
-      {/* Local Arabic Font */}
-      <style jsx global>{`
-        @font-face {
-          font-family: "Rabar";
-          src: url("/fonts/Rabar.ttf") format("truetype");
-          font-weight: 400 700;
-          font-style: normal;
-          font-display: swap;
-        }
-      `}</style>
 
       <div className="max-w-lg mx-auto">
         {/* Header */}
@@ -200,7 +193,7 @@ export default function MemberIdCardPage() {
             id="front-card"
             className="rounded-xl shadow-2xl overflow-hidden"
             style={{
-              fontFamily: "'Rabar', 'Noto Naskh Arabic', Arial, sans-serif",
+              fontFamily: "var(--font-rabar), var(--font-noto-naskh), Arial, sans-serif",
               width: `${CARD_WIDTH}px`,
               height: `${CARD_HEIGHT}px`,
               position: "relative",
@@ -378,7 +371,7 @@ export default function MemberIdCardPage() {
             id="back-card"
             className="rounded-xl shadow-2xl overflow-hidden"
             style={{
-              fontFamily: "'Rabar', 'Noto Naskh Arabic', Arial, sans-serif",
+              fontFamily: "var(--font-rabar), var(--font-noto-naskh), Arial, sans-serif",
               width: `${CARD_WIDTH}px`,
               height: `${CARD_HEIGHT}px`,
               position: "relative",

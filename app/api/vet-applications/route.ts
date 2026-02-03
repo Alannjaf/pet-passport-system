@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vetApplications, cities, branchAssignments } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
-import { eq, desc, inArray, and } from "drizzle-orm";
+import { eq, desc, inArray, and, count } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendEmail, applicationSubmittedEmail } from "@/lib/email/send";
 
@@ -17,6 +17,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const cityId = searchParams.get("cityId");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "25")));
+    const offset = (page - 1) * limit;
 
     // Build query conditions
     let conditions = [];
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
       // Branch heads can only see their assigned cities
       const assignedCityIds = session.user.assignedCityIds || [];
       if (assignedCityIds.length === 0) {
-        return NextResponse.json([]); // No cities assigned
+        return NextResponse.json({ data: [], total: 0, page, limit });
       }
       conditions.push(inArray(vetApplications.cityId, assignedCityIds));
     } else if (cityId) {
@@ -39,35 +42,41 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(vetApplications.cityId, parseInt(cityId)));
     }
 
-    // Execute query
-    const applications = await db
-      .select({
-        id: vetApplications.id,
-        trackingToken: vetApplications.trackingToken,
-        fullNameKu: vetApplications.fullNameKu,
-        fullNameEn: vetApplications.fullNameEn,
-        emailAddress: vetApplications.emailAddress,
-        phoneNumber: vetApplications.phoneNumber,
-        cityId: vetApplications.cityId,
-        status: vetApplications.status,
-        rejectionReason: vetApplications.rejectionReason,
-        createdAt: vetApplications.createdAt,
-        reviewedAt: vetApplications.reviewedAt,
-      })
-      .from(vetApplications)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(vetApplications.createdAt));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Get city info for each application
-    const allCities = await db.select().from(cities);
-    const citiesMap = new Map(allCities.map((c) => [c.id, c]));
+    // Get total count and paginated data in parallel
+    const [countResult, results] = await Promise.all([
+      db.select({ total: count() }).from(vetApplications).where(whereClause),
+      db
+        .select({
+          id: vetApplications.id,
+          trackingToken: vetApplications.trackingToken,
+          fullNameKu: vetApplications.fullNameKu,
+          fullNameEn: vetApplications.fullNameEn,
+          emailAddress: vetApplications.emailAddress,
+          phoneNumber: vetApplications.phoneNumber,
+          cityId: vetApplications.cityId,
+          status: vetApplications.status,
+          rejectionReason: vetApplications.rejectionReason,
+          createdAt: vetApplications.createdAt,
+          reviewedAt: vetApplications.reviewedAt,
+          city: cities,
+        })
+        .from(vetApplications)
+        .leftJoin(cities, eq(vetApplications.cityId, cities.id))
+        .where(whereClause)
+        .orderBy(desc(vetApplications.createdAt))
+        .limit(limit)
+        .offset(offset),
+    ]);
 
-    const applicationsWithCity = applications.map((app) => ({
+    const total = countResult[0]?.total || 0;
+    const applicationsWithCity = results.map(({ city, ...app }) => ({
       ...app,
-      city: citiesMap.get(app.cityId) || null,
+      city: city || null,
     }));
 
-    return NextResponse.json(applicationsWithCity);
+    return NextResponse.json({ data: applicationsWithCity, total, page, limit });
   } catch (error) {
     console.error("Error fetching applications:", error);
     return NextResponse.json(
