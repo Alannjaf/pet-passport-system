@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vetMembers, cities } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { auth } from "@/lib/auth/auth";
 
 // GET - Fetch member by QR code ID (public)
 export async function GET(
@@ -42,6 +43,9 @@ export async function GET(
     // Check if expired
     const isExpired = new Date(member.expiryDate) < new Date();
 
+    const session = await auth()
+    const isAdmin = session && ['syndicate', 'branch_head'].includes(session.user.role)
+
     // Return public info only
     return NextResponse.json({
       memberId: member.memberId,
@@ -59,8 +63,7 @@ export async function GET(
         nameKu: city.nameKu,
         code: city.code,
       } : null,
-      // For authenticated users, include the member ID for edit link
-      id: member.id,
+      ...(isAdmin ? { id: member.id } : {}),
     });
   } catch (error) {
     console.error("Error fetching member by QR code:", error);

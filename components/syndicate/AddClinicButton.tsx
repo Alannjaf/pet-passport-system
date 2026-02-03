@@ -47,7 +47,7 @@ export default function AddClinicButton() {
   const handleDownloadPDF = async () => {
     if (!credentials) return
 
-    const { default: jsPDF } = await import("jspdf");
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF()
     
     // Set font

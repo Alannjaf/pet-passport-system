@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { renewalRequests, vetMembers, cities } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq, desc, inArray, and } from "drizzle-orm";
+import { rateLimit } from "@/lib/utils/rate-limit";
 
 // GET - Fetch renewal requests (branch/admin only)
 export async function GET(request: NextRequest) {
@@ -82,6 +83,12 @@ export async function GET(request: NextRequest) {
 // POST - Create renewal request (public, for members via their status page)
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const rl = rateLimit(`renewal:${ip}`, 5, 60 * 60 * 1000)
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+    }
+
     const body = await request.json();
     const { memberId } = body;
 

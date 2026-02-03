@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { syndicateMembers } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { asc, eq } from "drizzle-orm";
+import { validateBase64Fields } from "@/lib/utils/validation";
 
 // GET - Fetch all members (public)
 export async function GET() {
@@ -58,6 +59,11 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    const base64Error = validateBase64Fields(body, ['photoBase64'])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
     }
 
     const [newMember] = await db

@@ -1,10 +1,24 @@
 import { auth } from '@/lib/auth/auth'
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/utils/rate-limit'
 
 export default async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Rate limit login attempts
+  if (pathname.startsWith('/api/auth') && request.method === 'POST') {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const rl = rateLimit(`login:${ip}`, 10, 15 * 60 * 1000)
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      )
+    }
+  }
+
   // Handle auth protection first
   const session = await auth()
-  const { pathname } = request.nextUrl
 
   // Protected routes - Syndicate admin only
   if (pathname.startsWith('/syndicate')) {
@@ -31,6 +45,6 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  matcher: ['/((?!_next|_vercel|.*\\..*).*)'],
 }
 

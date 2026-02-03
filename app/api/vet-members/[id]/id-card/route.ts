@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth/auth";
 import { db } from "@/lib/db";
 import { vetMembers, cities } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -19,6 +20,11 @@ export async function GET(
 
     if (isNaN(memberId)) {
       return NextResponse.json({ error: "Invalid member ID" }, { status: 400 });
+    }
+
+    const session = await auth();
+    if (!session || !["syndicate", "branch_head"].includes(session.user.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get member

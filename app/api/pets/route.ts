@@ -11,6 +11,7 @@ import {
   qrCodes,
 } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { validateBase64Fields } from "@/lib/utils/validation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,6 +62,11 @@ export async function POST(request: NextRequest) {
       parasiteTreatments: parasiteData,
       otherTreatments: otherData,
     } = body;
+
+    const base64Error = validateBase64Fields(body, ['photoBase64'])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
+    }
 
     // Check if all required passport sections are filled to lock them
     // Note: Marking (transponder/tattoo) is optional and not required for locking
@@ -292,6 +298,11 @@ export async function PUT(request: NextRequest) {
 
     if (existingProfile.length === 0) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    }
+
+    const base64Error = validateBase64Fields(body, ['photoBase64'])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
     }
 
     const isLocked = existingProfile[0].passportSectionsLocked === "true";

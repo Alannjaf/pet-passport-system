@@ -31,7 +31,7 @@ export default function QRHistoryTable({ batches }: QRHistoryTableProps) {
       const qrCodes = data.qrCodes;
 
       // Generate PDF
-      const { default: jsPDF } = await import("jspdf");
+      const { jsPDF } = await import("jspdf");
       const doc = new jsPDF();
       const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm

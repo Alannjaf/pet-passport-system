@@ -4,6 +4,8 @@ import { adminUsers, branchAssignments, cities } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { validatePasswordStrength } from "@/lib/utils/crypto";
+import { auditLog } from '@/lib/utils/audit';
 
 // GET - Fetch single branch head user with assignments
 export async function GET(
@@ -97,11 +99,9 @@ export async function PUT(
     const updateData: { username?: string; password?: string } = {};
     if (username) updateData.username = username;
     if (password) {
-      if (password.length < 6) {
-        return NextResponse.json(
-          { error: "Password must be at least 6 characters" },
-          { status: 400 }
-        );
+      const validation = validatePasswordStrength(password);
+      if (!validation.valid) {
+        return NextResponse.json({ error: validation.error }, { status: 400 });
       }
       updateData.password = await bcrypt.hash(password, 10);
     }
@@ -130,6 +130,8 @@ export async function PUT(
         );
       }
     }
+
+    auditLog({ action: 'branch_user.updated', actorId: session.user.id, actorRole: session.user.role, targetId: id, targetType: 'branch_user' })
 
     return NextResponse.json({ message: "User updated successfully" });
   } catch (error: unknown) {
@@ -181,6 +183,8 @@ export async function DELETE(
     if (!deletedUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    auditLog({ action: 'branch_user.deleted', actorId: session.user.id, actorRole: session.user.role, targetId: id, targetType: 'branch_user' })
 
     return NextResponse.json({ message: "User deleted successfully" });
   } catch (error) {

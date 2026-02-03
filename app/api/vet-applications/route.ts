@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth/auth";
 import { eq, desc, inArray, and, count } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendEmail, applicationSubmittedEmail } from "@/lib/email/send";
+import { validateBase64Fields, safeParseInt } from "@/lib/utils/validation";
+import { rateLimit } from "@/lib/utils/rate-limit";
 
 // GET - Fetch applications (branch/admin only, filtered by city for branch heads)
 export async function GET(request: NextRequest) {
@@ -17,8 +19,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const cityId = searchParams.get("cityId");
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "25")));
+    const page = Math.max(1, safeParseInt(searchParams.get("page"), 1))
+    const limit = Math.min(100, Math.max(1, safeParseInt(searchParams.get("limit"), 25)))
     const offset = (page - 1) * limit;
 
     // Build query conditions
@@ -89,6 +91,12 @@ export async function GET(request: NextRequest) {
 // POST - Submit new application (public or admin/branch on behalf)
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const rl = rateLimit(`application:${ip}`, 3, 60 * 60 * 1000)
+    if (!rl.success) {
+      return NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 })
+    }
+
     const body = await request.json();
     
     // Check if this is an admin/branch submission
@@ -200,6 +208,18 @@ export async function POST(request: NextRequest) {
         { error: "Invalid or inactive city selected" },
         { status: 400 }
       );
+    }
+
+    const base64Error = validateBase64Fields(body, [
+      'collegeCertificateBase64',
+      'photoBase64',
+      'signatureBase64',
+      'nationalIdCardBase64',
+      'infoCardBase64',
+      'recommendationLetterBase64',
+    ])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
     }
 
     // Generate unique tracking token

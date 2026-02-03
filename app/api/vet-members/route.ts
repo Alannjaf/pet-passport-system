@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vetMembers, cities } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq, desc, inArray, and, or, ilike, sql, count } from "drizzle-orm";
+import { safeParseInt } from "@/lib/utils/validation";
 
 // GET - Fetch members with pagination (branch/admin only, filtered by city for branch heads)
 export async function GET(request: NextRequest) {
@@ -16,8 +17,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const cityId = searchParams.get("cityId");
     const search = searchParams.get("search");
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "25")));
+    const page = Math.max(1, safeParseInt(searchParams.get("page"), 1))
+    const limit = Math.min(100, Math.max(1, safeParseInt(searchParams.get("limit"), 25)))
     const offset = (page - 1) * limit;
 
     // Build query conditions

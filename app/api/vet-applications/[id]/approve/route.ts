@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth/auth";
 import { eq, count } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendEmail, applicationApprovedEmail } from "@/lib/email/send";
+import { auditLog } from '@/lib/utils/audit';
 
 // POST - Approve application
 export async function POST(
@@ -121,6 +122,8 @@ export async function POST(
       subject: emailContent.subject,
       html: emailContent.html,
     });
+
+    auditLog({ action: 'application.approved', actorId: session.user.id, actorRole: session.user.role, targetId: id, targetType: 'application' })
 
     return NextResponse.json({
       message: "Application approved successfully",

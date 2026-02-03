@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vetMembers, cities } from "@/lib/db/schema";
 import { auth } from "@/lib/auth/auth";
 import { eq } from "drizzle-orm";
+import { validateBase64Fields } from "@/lib/utils/validation";
 
 // GET - Fetch single member
 export async function GET(
@@ -108,6 +109,11 @@ export async function PUT(
       jobLocation,
       scientificRank,
     } = body;
+
+    const base64Error = validateBase64Fields(body, ['photoBase64'])
+    if (base64Error) {
+      return NextResponse.json({ error: base64Error }, { status: 400 })
+    }
 
     // Update member
     const [updatedMember] = await db
