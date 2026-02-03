@@ -69,7 +69,6 @@ export default function MemberIdCardPage() {
         quality: 1,
         pixelRatio: scale,
         backgroundColor: '#1a365d',
-        skipFonts: true, // Skip font embedding to avoid CORS issues with Google Fonts
       });
 
       // Capture back card using html-to-image
@@ -77,7 +76,6 @@ export default function MemberIdCardPage() {
         quality: 1,
         pixelRatio: scale,
         backgroundColor: '#1a365d',
-        skipFonts: true, // Skip font embedding to avoid CORS issues with Google Fonts
       });
 
       // Create PDF with standard credit card dimensions
@@ -130,13 +128,16 @@ export default function MemberIdCardPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
-      {/* Google Fonts */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-      />
+      {/* Local Arabic Font */}
+      <style jsx global>{`
+        @font-face {
+          font-family: 'Noto Naskh Arabic';
+          src: url('/fonts/NotoNaskhArabic.ttf') format('truetype');
+          font-weight: 400 700;
+          font-style: normal;
+          font-display: swap;
+        }
+      `}</style>
 
       <div className="max-w-lg mx-auto">
         {/* Header */}

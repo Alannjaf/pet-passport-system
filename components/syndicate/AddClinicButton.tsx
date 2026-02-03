@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import jsPDF from 'jspdf'
-import { registerArabicFont, containsArabicOrKurdish, ARABIC_FONT_FAMILY } from '@/lib/fonts/arabicFont'
 
 export default function AddClinicButton() {
   const router = useRouter()
@@ -51,9 +50,6 @@ export default function AddClinicButton() {
 
     const doc = new jsPDF()
     
-    // Register Unicode font for Arabic/Kurdish support
-    registerArabicFont(doc)
-    
     // Set font
     doc.setFontSize(20)
     doc.setFont('helvetica', 'bold')
@@ -74,12 +70,8 @@ export default function AddClinicButton() {
     doc.setFont('helvetica', 'bold')
     doc.text('Clinic Name:', 20, 75)
     
-    // Use Unicode font if clinic name contains Arabic/Kurdish characters
-    if (containsArabicOrKurdish(credentials.clinicName)) {
-      doc.setFont(ARABIC_FONT_FAMILY, 'normal')
-    } else {
-      doc.setFont('helvetica', 'normal')
-    }
+    // Clinic name (note: Arabic/Kurdish characters may not render correctly with helvetica)
+    doc.setFont('helvetica', 'normal')
     doc.text(credentials.clinicName, 60, 75)
     
     // Account credentials box

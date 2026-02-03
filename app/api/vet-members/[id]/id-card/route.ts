@@ -4,6 +4,9 @@ import { vetMembers, cities } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import QRCode from "qrcode";
 
+// QR Code cache - stores generated QR codes to avoid regenerating for the same data
+const qrCodeCache = new Map<string, string>();
+
 // GET - Return member data for ID card generation
 export async function GET(
   request: NextRequest,
@@ -33,14 +36,21 @@ export async function GET(
       .from(cities)
       .where(eq(cities.id, member.cityId));
 
-    // Generate QR code as data URL
+    // Generate QR code as data URL (with caching)
     const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
     const verifyUrl = `${baseUrl}/verify/${member.qrCodeId}`;
-    const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-      width: 200,
-      margin: 1,
-      errorCorrectionLevel: "M",
-    });
+    
+    // Check cache first
+    let qrDataUrl = qrCodeCache.get(verifyUrl);
+    if (!qrDataUrl) {
+      // Generate and cache if not found
+      qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+        width: 200,
+        margin: 1,
+        errorCorrectionLevel: "M",
+      });
+      qrCodeCache.set(verifyUrl, qrDataUrl);
+    }
 
     // Return JSON data for client-side rendering
     return NextResponse.json({
