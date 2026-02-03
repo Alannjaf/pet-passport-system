@@ -7,10 +7,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [],
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  experimental: {
+experimental: {
     optimizePackageImports: ["qrcode", "react-datepicker", "react-easy-crop"],
   },
   // Allow access from mobile devices and tunneling services
