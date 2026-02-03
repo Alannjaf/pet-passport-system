@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import SignatureCanvas from "@/components/SignatureCanvas";
 import DatePicker from "@/components/DatePicker";
+import ImageCropModal from "@/components/ImageCropModal";
 
 interface City {
   id: number;
@@ -84,6 +85,8 @@ export default function VetApplicationForm({
   const nationalIdCardInputRef = useRef<HTMLInputElement>(null);
   const infoCardInputRef = useRef<HTMLInputElement>(null);
   const recommendationLetterInputRef = useRef<HTMLInputElement>(null);
+
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   const [universityDegrees, setUniversityDegrees] = useState<UniversityDegree[]>(() => {
     if (initialData?.universityDegrees) {
@@ -170,10 +173,16 @@ export default function VetApplicationForm({
     // Convert to base64
     const reader = new FileReader();
     reader.onloadend = () => {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: reader.result as string,
-      }));
+      const result = reader.result as string;
+      if (field === "photoBase64") {
+        // Open crop modal for photo uploads
+        setCropImageSrc(result);
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          [field]: result,
+        }));
+      }
     };
     reader.readAsDataURL(file);
     setError("");
@@ -924,6 +933,22 @@ export default function VetApplicationForm({
           )}
         </button>
       </div>
+
+      {/* Photo Crop Modal */}
+      {cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          onCropComplete={(croppedBase64) => {
+            setFormData((prev) => ({ ...prev, photoBase64: croppedBase64 }));
+            setCropImageSrc(null);
+            if (photoInputRef.current) photoInputRef.current.value = "";
+          }}
+          onCancel={() => {
+            setCropImageSrc(null);
+            if (photoInputRef.current) photoInputRef.current.value = "";
+          }}
+        />
+      )}
     </form>
   );
 }

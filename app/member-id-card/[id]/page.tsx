@@ -222,7 +222,7 @@ export default function MemberIdCardPage() {
               <div
                 style={{
                   position: "absolute",
-                  top: "120px", // ← PHOTO vertical position
+                  top: "115px", // ← PHOTO vertical position
                   left: "15px", // ← PHOTO horizontal position
                   width: "95px", // ← PHOTO width
                   height: "115px", // ← PHOTO height
