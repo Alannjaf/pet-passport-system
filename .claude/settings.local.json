@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(node -e:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add Arabic title field, mandatory National ID upload, and form error UX improvements\n\n- Add titleAr field to vetMembers schema, approve API, ID card API, and card preview\n- Add Arabic title input to both syndicate and branch review pages\n- Show validation errors near submit button in VetApplicationForm\n- Make National ID Card upload mandatory with bilingual error message\n- Fix pre-existing educationLevel reference \\(replaced with scientificRank\\)\n- Include edit/delete functionality, tracking URL display, and form updates from prior work\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git commit:*)",
+      "Bash(du -sh:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm i:*)",
+      "Bash(npm show:*)",
+      "WebSearch",
+      "Bash(cat:*)",
+      "Bash(npm audit:*)",
+      "Bash(grep:*)",
+      "Bash(npm ls:*)",
+      "Bash(git push)",
+      "Bash(git push:*)",
+      "Bash(git status:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(git branch:*)",
+      "Bash(winget install:*)",
+      "Bash(choco install:*)",
+      "Bash(jq:*)",
+      "Bash(find:*)"
+    ]
+  }
+}
