@@ -297,7 +297,7 @@ export default function BranchUsersPage() {
             {users.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                  No branch head users created yet. Click "Add Branch Head" to create one.
+                  No branch head users created yet. Click &ldquo;Add Branch Head&rdquo; to create one.
                 </td>
               </tr>
             ) : (
