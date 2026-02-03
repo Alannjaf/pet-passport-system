@@ -11,31 +11,45 @@ interface City {
   code: string;
 }
 
+interface UniversityDegree {
+  degreeName: string;
+  universityName: string;
+  graduationYear: string;
+}
+
 interface Application {
   id: number;
   trackingToken: string;
   fullNameKu: string;
   fullNameEn: string;
   dateOfBirth: string;
+  placeOfBirth: string | null;
   nationalIdNumber: string;
-  nationalIdIssueDate: string;
-  nationality: string;
+  nationalIdDate: string | null;
   marriageStatus: string;
   numberOfChildren: number;
   bloodType: string;
+  // Education & Work
+  universityDegrees: string | null;
+  scientificRank: string | null;
   collegeCertificateBase64: string;
-  collegeFinishDate: string;
-  educationLevel: string;
-  yearsAsEmployee: number;
-  jobType: string;
   jobLocation: string;
+  yearOfEmployment: string | null;
+  privateWorkDetails: string | null;
+  // Contact
   currentLocation: string;
   phoneNumber: string;
   emailAddress: string;
   cityId: number;
+  // Attachments
+  nationalIdCardBase64: string | null;
+  infoCardBase64: string | null;
+  recommendationLetterBase64: string | null;
+  // Verification
   confirmationChecked: boolean;
   signatureBase64: string;
   photoBase64: string;
+  // Status
   status: "pending" | "approved" | "rejected";
   rejectionReason: string | null;
   createdAt: string;
@@ -58,6 +72,8 @@ export default function ApplicationReviewPage({
   const [rejectionReason, setRejectionReason] = useState("");
   const [titleEn, setTitleEn] = useState("Veterinarian");
   const [titleKu, setTitleKu] = useState("پزیشکی ئاژەڵان");
+  const [titleAr, setTitleAr] = useState("طبيب بيطري");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     fetchApplication();
@@ -87,7 +103,7 @@ export default function ApplicationReviewPage({
       const response = await fetch(`/api/vet-applications/${id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ titleEn, titleKu }),
+        body: JSON.stringify({ titleEn, titleKu, titleAr }),
       });
 
       if (!response.ok) {
@@ -128,34 +144,85 @@ export default function ApplicationReviewPage({
     }
   };
 
-  const handleDownloadCertificate = () => {
-    if (!application?.collegeCertificateBase64) return;
-    
-    // Extract the base64 data and mime type
-    const matches = application.collegeCertificateBase64.match(/^data:(.+);base64,(.+)$/);
+  const handleDelete = async () => {
+    if (!application) return;
+    setProcessing(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/vet-applications/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete application");
+      }
+      router.push("/branch/applications");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setShowDeleteModal(false);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDownloadFile = (base64Data: string, filename: string) => {
+    const matches = base64Data.match(/^data:(.+);base64,(.+)$/);
     if (!matches) return;
-    
+
     const mimeType = matches[1];
-    const base64Data = matches[2];
-    
-    // Convert base64 to blob
-    const byteCharacters = atob(base64Data);
+    const data = matches[2];
+
+    const byteCharacters = atob(data);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: mimeType });
-    
-    // Create download link
+
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `certificate-${application.fullNameEn.replace(/\s+/g, '-')}.pdf`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const renderAttachment = (base64: string | null, label: string, filename: string) => {
+    if (!base64) return null;
+    return (
+      <div>
+        <p className="text-sm text-gray-500 mb-2">{label}</p>
+        {base64.startsWith("data:image") ? (
+          <img
+            src={base64}
+            alt={label}
+            className="max-w-full h-auto max-h-96 rounded-lg border border-gray-200"
+          />
+        ) : (
+          <button
+            onClick={() => handleDownloadFile(base64, filename)}
+            className="text-emerald-600 hover:text-emerald-700 underline flex items-center gap-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Download {label} (PDF)
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const parseDegrees = (): UniversityDegree[] => {
+    if (!application?.universityDegrees) return [];
+    try {
+      return JSON.parse(application.universityDegrees);
+    } catch {
+      return [];
+    }
   };
 
   if (loading) {
@@ -177,6 +244,8 @@ export default function ApplicationReviewPage({
     );
   }
 
+  const degrees = parseDegrees();
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -186,7 +255,7 @@ export default function ApplicationReviewPage({
             href="/branch/applications"
             className="text-emerald-600 hover:text-emerald-700 text-sm mb-2 inline-flex items-center gap-1"
           >
-            ← Back to Applications
+            &larr; Back to Applications
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Application Review</h1>
           <p className="text-gray-600 mt-1">
@@ -216,10 +285,10 @@ export default function ApplicationReviewPage({
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Personal Information */}
+          {/* 1. Personal Information */}
           <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
-              Personal Information
+              1. Personal Information / زانیاری کەسی
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
@@ -231,126 +300,181 @@ export default function ApplicationReviewPage({
                 <p className="font-medium text-gray-900" dir="rtl">{application.fullNameKu}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Date of Birth</p>
+                <p className="text-sm text-gray-500">Date of Birth / ساڵی لە دایکبوون</p>
                 <p className="font-medium text-gray-900">{application.dateOfBirth}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">National ID Number</p>
+                <p className="text-sm text-gray-500">Place of Birth / شوێنی لە دایکبوون</p>
+                <p className="font-medium text-gray-900">{application.placeOfBirth || "—"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">National ID Number / ژمارەی ناسنامە</p>
                 <p className="font-medium text-gray-900">{application.nationalIdNumber}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">National ID Issue Date</p>
-                <p className="font-medium text-gray-900">{application.nationalIdIssueDate}</p>
+                <p className="text-sm text-gray-500">National ID Date / ڕێکەوتی ناسنامە</p>
+                <p className="font-medium text-gray-900">{application.nationalIdDate || "—"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Education */}
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+              2. Education / خوێندن
+            </h2>
+            {/* University Degrees */}
+            {degrees.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm text-gray-500 mb-2">University Degrees / بڕوانامەکانی زانکۆ</p>
+                <div className="space-y-2">
+                  {degrees.map((degree, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="grid md:grid-cols-3 gap-2">
+                        <div>
+                          <p className="text-xs text-gray-500">Degree / بڕوانامە</p>
+                          <p className="font-medium text-gray-900 text-sm">{degree.degreeName || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">University / زانکۆ</p>
+                          <p className="font-medium text-gray-900 text-sm">{degree.universityName || "—"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Graduation Year / ساڵی دەرچوون</p>
+                          <p className="font-medium text-gray-900 text-sm">{degree.graduationYear || "—"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Scientific/Academic Rank / پلەی زانستی</p>
+                <p className="font-medium text-gray-900">{application.scientificRank || "—"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Work */}
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+              3. Work / کار
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Current Workplace / شوێنی کاری ئێستا</p>
+                <p className="font-medium text-gray-900">{application.jobLocation}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Nationality</p>
-                <p className="font-medium text-gray-900">{application.nationality}</p>
+                <p className="text-sm text-gray-500">Year of Employment / ساڵی دامەزراندن لە فەرمانگە</p>
+                <p className="font-medium text-gray-900">{application.yearOfEmployment || "—"}</p>
               </div>
+              <div className="md:col-span-2">
+                <p className="text-sm text-gray-500">Private Work Details / جۆر و شوێنی کاری تایبەت</p>
+                <p className="font-medium text-gray-900">{application.privateWorkDetails || "—"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Personal Details */}
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+              4. Personal Details / زانیاری کەسی تر
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Marriage Status</p>
+                <p className="text-sm text-gray-500">Marriage Status / باری خێزانی</p>
                 <p className="font-medium text-gray-900">{application.marriageStatus}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Number of Children</p>
+                <p className="text-sm text-gray-500">Number of Children / ژمارەی منداڵ</p>
                 <p className="font-medium text-gray-900">{application.numberOfChildren}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Blood Type</p>
+                <p className="text-sm text-gray-500">Blood Type / جۆری خوێن</p>
                 <p className="font-medium text-gray-900">{application.bloodType}</p>
               </div>
             </div>
           </div>
 
-          {/* Education & Work */}
+          {/* 5. Contact Information */}
           <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
-              Education & Work
+              5. Contact Information / زانیاری پەیوەندی
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Education Level</p>
-                <p className="font-medium text-gray-900">{application.educationLevel}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">College Finish Date</p>
-                <p className="font-medium text-gray-900">{application.collegeFinishDate}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Years as Employee</p>
-                <p className="font-medium text-gray-900">{application.yearsAsEmployee}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Job Type</p>
-                <p className="font-medium text-gray-900">{application.jobType}</p>
-              </div>
-              <div className="md:col-span-2">
-                <p className="text-sm text-gray-500">Job Location</p>
-                <p className="font-medium text-gray-900">{application.jobLocation}</p>
-              </div>
-            </div>
-            {application.collegeCertificateBase64 && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-500 mb-2">College Certificate</p>
-                {application.collegeCertificateBase64.startsWith("data:image") ? (
-                  <img
-                    src={application.collegeCertificateBase64}
-                    alt="College Certificate"
-                    className="max-w-full h-auto max-h-96 rounded-lg border border-gray-200"
-                  />
-                ) : (
-                  <button
-                    onClick={handleDownloadCertificate}
-                    className="text-emerald-600 hover:text-emerald-700 underline flex items-center gap-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Download Certificate (PDF)
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Contact Information */}
-          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
-              Contact Information
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Current Location</p>
+                <p className="text-sm text-gray-500">Place of Residence / شوێنی دانیشتن</p>
                 <p className="font-medium text-gray-900">{application.currentLocation}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">City/Branch</p>
+                <p className="text-sm text-gray-500">City/Branch / شار/لق</p>
                 <p className="font-medium text-gray-900">
-                  {application.city?.nameEn} ({application.city?.code})
+                  {application.city?.nameEn} - {application.city?.nameKu} ({application.city?.code})
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Phone Number</p>
+                <p className="text-sm text-gray-500">Phone Number / ژمارەی مۆبایل</p>
                 <p className="font-medium text-gray-900">{application.phoneNumber}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Email Address</p>
+                <p className="text-sm text-gray-500">Email / ئیمەیل</p>
                 <p className="font-medium text-gray-900">{application.emailAddress}</p>
               </div>
             </div>
           </div>
 
-          {/* Signature */}
+          {/* 6. Attachments */}
           <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
-              Digital Signature
+              6. Attachments / هاوپێچ
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              {renderAttachment(
+                application.collegeCertificateBase64,
+                "Certificate / بڕوانامە",
+                `certificate-${application.fullNameEn.replace(/\s+/g, "-")}.pdf`
+              )}
+              {renderAttachment(
+                application.nationalIdCardBase64,
+                "National ID Card / کارتی نیشتیمانی",
+                `national-id-${application.fullNameEn.replace(/\s+/g, "-")}.pdf`
+              )}
+              {renderAttachment(
+                application.infoCardBase64,
+                "Information Card / کارتی زانیاری",
+                `info-card-${application.fullNameEn.replace(/\s+/g, "-")}.pdf`
+              )}
+              {renderAttachment(
+                application.recommendationLetterBase64,
+                "Recommendation Letter / پاڵێنامە",
+                `recommendation-${application.fullNameEn.replace(/\s+/g, "-")}.pdf`
+              )}
+              {!application.collegeCertificateBase64 &&
+                !application.nationalIdCardBase64 &&
+                !application.infoCardBase64 &&
+                !application.recommendationLetterBase64 && (
+                  <p className="text-gray-500 text-sm">No attachments uploaded</p>
+                )}
+            </div>
+          </div>
+
+          {/* 7. Signature & Confirmation */}
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+              7. Declaration & Signature / ڕاگەیاندن و واژوو
             </h2>
             <div className="bg-gray-50 p-4 rounded-lg">
-              {application.signatureBase64 && (
+              {application.signatureBase64 ? (
                 <img
                   src={application.signatureBase64}
                   alt="Digital Signature"
                   className="max-h-24"
                 />
+              ) : (
+                <p className="text-gray-400 text-sm">No signature provided</p>
               )}
             </div>
             <p className="text-sm text-gray-500 mt-2">
@@ -415,6 +539,27 @@ export default function ApplicationReviewPage({
             </div>
           </div>
 
+          {/* Edit & Delete */}
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Manage Application
+            </h2>
+            <div className="space-y-3">
+              <Link
+                href={`/branch/applications/${id}/edit`}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-center block"
+              >
+                Edit Application
+              </Link>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full px-4 py-3 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition font-medium"
+              >
+                Delete Application
+              </button>
+            </div>
+          </div>
+
           {/* Actions (only for pending) */}
           {application.status === "pending" && (
             <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
@@ -443,6 +588,18 @@ export default function ApplicationReviewPage({
                     type="text"
                     value={titleKu}
                     onChange={(e) => setTitleKu(e.target.value)}
+                    dir="rtl"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Title (Arabic)
+                  </label>
+                  <input
+                    type="text"
+                    value={titleAr}
+                    onChange={(e) => setTitleAr(e.target.value)}
                     dir="rtl"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
@@ -513,6 +670,35 @@ export default function ApplicationReviewPage({
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
               >
                 {processing ? "Rejecting..." : "Confirm Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Delete Application
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to permanently delete this application? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={processing}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
+              >
+                {processing ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

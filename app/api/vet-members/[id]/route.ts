@@ -100,12 +100,13 @@ export async function PUT(
       fullNameEn,
       titleEn,
       titleKu,
+      titleAr,
       dateOfBirth,
       photoBase64,
       phoneNumber,
       emailAddress,
       jobLocation,
-      educationLevel,
+      scientificRank,
     } = body;
 
     // Update member
@@ -116,12 +117,13 @@ export async function PUT(
         fullNameEn: fullNameEn || existingMember.fullNameEn,
         titleEn: titleEn || existingMember.titleEn,
         titleKu: titleKu || existingMember.titleKu,
+        titleAr: titleAr !== undefined ? titleAr : existingMember.titleAr,
         dateOfBirth: dateOfBirth || existingMember.dateOfBirth,
         photoBase64: photoBase64 || existingMember.photoBase64,
         phoneNumber: phoneNumber !== undefined ? phoneNumber : existingMember.phoneNumber,
         emailAddress: emailAddress !== undefined ? emailAddress : existingMember.emailAddress,
         jobLocation: jobLocation !== undefined ? jobLocation : existingMember.jobLocation,
-        educationLevel: educationLevel !== undefined ? educationLevel : existingMember.educationLevel,
+        scientificRank: scientificRank !== undefined ? scientificRank : existingMember.scientificRank,
         updatedAt: new Date(),
         updatedBy: parseInt(session.user.id) || null,
       })

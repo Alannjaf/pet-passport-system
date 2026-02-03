@@ -32,6 +32,8 @@ export default function SyndicateApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [cityFilter, setCityFilter] = useState<string>("");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchCities();
@@ -71,6 +73,26 @@ export default function SyndicateApplicationsPage() {
       console.error("Error fetching applications:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/vet-applications/${deleteId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete");
+      }
+      setApplications((prev) => prev.filter((a) => a.id !== deleteId));
+    } catch (error) {
+      console.error("Error deleting application:", error);
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -193,16 +215,30 @@ export default function SyndicateApplicationsPage() {
                     {formatDate(app.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <Link
-                      href={`/syndicate/vet-applications/${app.id}`}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                        app.status === "pending"
-                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {app.status === "pending" ? "Review" : "View"}
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/syndicate/vet-applications/${app.id}`}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                          app.status === "pending"
+                            ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        {app.status === "pending" ? "Review" : "View"}
+                      </Link>
+                      <Link
+                        href={`/syndicate/vet-applications/${app.id}/edit`}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => setDeleteId(app.id)}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -210,6 +246,35 @@ export default function SyndicateApplicationsPage() {
           </table>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              Delete Application
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to permanently delete this application? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

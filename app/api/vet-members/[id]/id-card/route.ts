@@ -60,6 +60,7 @@ export async function GET(
       fullNameEn: member.fullNameEn,
       titleKu: member.titleKu,
       titleEn: member.titleEn,
+      titleAr: member.titleAr,
       dateOfBirth: member.dateOfBirth,
       photoBase64: member.photoBase64,
       qrCodeId: member.qrCodeId,

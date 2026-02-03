@@ -107,14 +107,9 @@ export async function POST(request: NextRequest) {
       "fullNameEn",
       "dateOfBirth",
       "nationalIdNumber",
-      "nationalIdIssueDate",
-      "nationality",
       "marriageStatus",
       "bloodType",
       "collegeCertificateBase64",
-      "collegeFinishDate",
-      "educationLevel",
-      "jobType",
       "jobLocation",
       "currentLocation",
       "phoneNumber",
@@ -145,6 +140,46 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate university degrees - at least one complete entry required
+    if (body.universityDegrees) {
+      try {
+        const degrees = typeof body.universityDegrees === "string"
+          ? JSON.parse(body.universityDegrees)
+          : body.universityDegrees;
+        if (!Array.isArray(degrees) || degrees.length === 0) {
+          return NextResponse.json(
+            { error: "At least one university degree is required" },
+            { status: 400 }
+          );
+        }
+        const first = degrees[0];
+        if (!first.degreeName || !first.universityName || !first.graduationYear) {
+          return NextResponse.json(
+            { error: "Please complete all fields for the first university degree (degree name, university name, and graduation year)" },
+            { status: 400 }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid university degrees format" },
+          { status: 400 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: "At least one university degree is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate info card is required when marriage status is "Married"
+    if (body.marriageStatus === "Married" && !body.infoCardBase64) {
+      return NextResponse.json(
+        { error: "Information card is required for married applicants" },
+        { status: 400 }
+      );
+    }
+
     // Validate city exists
     const [city] = await db
       .select()
@@ -169,22 +204,25 @@ export async function POST(request: NextRequest) {
         fullNameKu: body.fullNameKu,
         fullNameEn: body.fullNameEn,
         dateOfBirth: body.dateOfBirth,
+        placeOfBirth: body.placeOfBirth || null,
         nationalIdNumber: body.nationalIdNumber,
-        nationalIdIssueDate: body.nationalIdIssueDate,
-        nationality: body.nationality,
+        nationalIdDate: body.nationalIdDate || null,
         marriageStatus: body.marriageStatus,
         numberOfChildren: body.numberOfChildren || 0,
         bloodType: body.bloodType,
+        universityDegrees: body.universityDegrees || null,
+        scientificRank: body.scientificRank || null,
         collegeCertificateBase64: body.collegeCertificateBase64,
-        collegeFinishDate: body.collegeFinishDate,
-        educationLevel: body.educationLevel,
-        yearsAsEmployee: body.yearsAsEmployee || 0,
-        jobType: body.jobType,
         jobLocation: body.jobLocation,
+        yearOfEmployment: body.yearOfEmployment || null,
+        privateWorkDetails: body.privateWorkDetails || null,
         currentLocation: body.currentLocation,
         phoneNumber: body.phoneNumber,
         emailAddress: body.emailAddress,
         cityId: body.cityId,
+        nationalIdCardBase64: body.nationalIdCardBase64 || null,
+        infoCardBase64: body.infoCardBase64 || null,
+        recommendationLetterBase64: body.recommendationLetterBase64 || null,
         confirmationChecked: isAdminSubmission ? true : body.confirmationChecked,
         signatureBase64: body.signatureBase64 || "",
         photoBase64: body.photoBase64,

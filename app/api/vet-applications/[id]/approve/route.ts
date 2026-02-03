@@ -54,6 +54,7 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const titleEn = body.titleEn || "Veterinarian";
     const titleKu = body.titleKu || "پزیشکی ئاژەڵان";
+    const titleAr = body.titleAr || "طبيب بيطري";
 
     // Generate member ID (sequential: 00001, 00002, etc.)
     const [memberCount] = await db
@@ -80,13 +81,14 @@ export async function POST(
         fullNameEn: application.fullNameEn,
         titleEn,
         titleKu,
+        titleAr,
         dateOfBirth: application.dateOfBirth,
         photoBase64: application.photoBase64,
         nationalIdNumber: application.nationalIdNumber,
         phoneNumber: application.phoneNumber,
         emailAddress: application.emailAddress,
         jobLocation: application.jobLocation,
-        educationLevel: application.educationLevel,
+        scientificRank: application.scientificRank,
         qrCodeId,
         issueDate,
         expiryDate,

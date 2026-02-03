@@ -12,6 +12,7 @@ interface MemberData {
   fullNameEn: string;
   titleKu: string;
   titleEn: string;
+  titleAr: string | null;
   dateOfBirth: string;
   photoBase64: string | null;
   qrCodeId: string;
@@ -309,7 +310,7 @@ export default function MemberIdCardPage() {
               نازناوی پیشە/العنوان الوظيفي/ Job Title
             </div>
 
-            {/* English + Kurdish title (one line, right-aligned, vertically centered) */}
+            {/* Title (Kurdish / Arabic / English, right-aligned) */}
             <div
               style={{
                 position: "absolute",
@@ -320,17 +321,23 @@ export default function MemberIdCardPage() {
                 flexDirection: "row-reverse",
                 alignItems: "baseline",
                 justifyContent: "flex-start",
-                gap: "8px",
+                gap: "4px",
                 whiteSpace: "nowrap",
               }}
             >
               <span
-                style={{ direction: "rtl", fontSize: "13px", fontWeight: "normal", color: "#1a1a1a" }}
+                style={{ direction: "rtl", fontSize: "12px", fontWeight: "normal", color: "#1a1a1a" }}
               >
                 {member.titleKu}
               </span>
-              <span style={{ fontSize: "13px", fontWeight: "normal", color: "#1a1a1a" }}> / </span>
-              <span style={{ fontSize: "13px", fontWeight: "normal", color: "#1a1a1a" }}>
+              <span style={{ fontSize: "12px", fontWeight: "normal", color: "#1a1a1a" }}>/</span>
+              <span
+                style={{ direction: "rtl", fontSize: "12px", fontWeight: "normal", color: "#1a1a1a" }}
+              >
+                {member.titleAr || "طبيب بيطري"}
+              </span>
+              <span style={{ fontSize: "12px", fontWeight: "normal", color: "#1a1a1a" }}>/</span>
+              <span style={{ fontSize: "12px", fontWeight: "normal", color: "#1a1a1a" }}>
                 {member.titleEn}
               </span>
             </div>
