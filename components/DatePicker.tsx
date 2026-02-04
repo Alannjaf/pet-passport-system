@@ -22,18 +22,21 @@ export default function DatePicker({
   minDate,
 }: DatePickerProps) {
   // Convert YYYY-MM-DD string to Date object (using UTC to avoid timezone/DST issues)
-  const selectedDate = value ? new Date(value + "T00:00:00Z") : null;
+  const parsed = new Date(value + "T00:00:00Z");
+  const selectedDate = value && !isNaN(parsed.getTime()) ? parsed : null;
 
   // Convert Date object back to YYYY-MM-DD string (using UTC methods)
   const handleChange = (date: Date | null) => {
-    if (date) {
+    if (date && !isNaN(date.getTime())) {
       const year = date.getUTCFullYear();
       const month = String(date.getUTCMonth() + 1).padStart(2, "0");
       const day = String(date.getUTCDate()).padStart(2, "0");
       onChange(`${year}-${month}-${day}`);
-    } else {
+    } else if (date === null) {
+      // Field was explicitly cleared — clear parent value
       onChange("");
     }
+    // Invalid Date object (partial typing) — do nothing, let user keep typing
   };
 
   return (
