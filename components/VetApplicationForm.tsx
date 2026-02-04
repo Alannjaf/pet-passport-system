@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import SignatureCanvas from "@/components/SignatureCanvas";
 import DatePicker from "@/components/DatePicker";
 import ImageCropModal from "@/components/ImageCropModal";
+import MultiFileUpload from "@/components/MultiFileUpload";
 
 interface City {
   id: number;
@@ -81,10 +82,6 @@ export default function VetApplicationForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const certInputRef = useRef<HTMLInputElement>(null);
-  const nationalIdCardInputRef = useRef<HTMLInputElement>(null);
-  const infoCardInputRef = useRef<HTMLInputElement>(null);
-  const recommendationLetterInputRef = useRef<HTMLInputElement>(null);
 
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
@@ -97,6 +94,17 @@ export default function VetApplicationForm({
     }
     return [{ degreeName: "", universityName: "", graduationYear: "" }];
   });
+
+  // Helper: parse a stored value into string[] (backward compat with single strings)
+  const parseDocArray = (val: string | null | undefined): string[] => {
+    if (!val) return [];
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    // Legacy single-string format
+    return val ? [val] : [];
+  };
 
   const [formData, setFormData] = useState({
     // Personal Info
@@ -111,7 +119,7 @@ export default function VetApplicationForm({
     bloodType: initialData?.bloodType || "",
     // Education & Work
     scientificRank: initialData?.scientificRank || "",
-    collegeCertificateBase64: initialData?.collegeCertificateBase64 || "",
+    collegeCertificateBase64: parseDocArray(initialData?.collegeCertificateBase64),
     jobLocation: initialData?.jobLocation || "",
     yearOfEmployment: initialData?.yearOfEmployment || "",
     privateWorkDetails: initialData?.privateWorkDetails || "",
@@ -120,11 +128,11 @@ export default function VetApplicationForm({
     phoneNumber: initialData?.phoneNumber || "",
     emailAddress: initialData?.emailAddress || "",
     cityId: initialData?.cityId?.toString() || preselectedCityId?.toString() || "",
-    // Files (base64)
+    // Files (base64) - documents are arrays, photo stays single
     photoBase64: initialData?.photoBase64 || "",
-    nationalIdCardBase64: initialData?.nationalIdCardBase64 || "",
-    infoCardBase64: initialData?.infoCardBase64 || "",
-    recommendationLetterBase64: initialData?.recommendationLetterBase64 || "",
+    nationalIdCardBase64: parseDocArray(initialData?.nationalIdCardBase64),
+    infoCardBase64: parseDocArray(initialData?.infoCardBase64),
+    recommendationLetterBase64: parseDocArray(initialData?.recommendationLetterBase64),
     // Verification
     signatureBase64: initialData?.signatureBase64 || "",
     confirmationChecked: initialData?.confirmationChecked || false,
@@ -147,42 +155,24 @@ export default function VetApplicationForm({
     }
   };
 
-  const handleFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: "photoBase64" | "collegeCertificateBase64" | "nationalIdCardBase64" | "infoCardBase64" | "recommendationLetterBase64"
-  ) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    const allowedTypes = field === "photoBase64" 
-      ? ["image/jpeg", "image/png", "image/jpg"]
-      : ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
-    
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
     if (!allowedTypes.includes(file.type)) {
-      setError(`Invalid file type. Allowed: ${field === "photoBase64" ? "JPG, PNG" : "JPG, PNG, PDF"}`);
+      setError("Invalid file type. Allowed: JPG, PNG");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError("File must be less than 5MB");
       return;
     }
 
-    // Convert to base64
     const reader = new FileReader();
     reader.onloadend = () => {
-      const result = reader.result as string;
-      if (field === "photoBase64") {
-        // Open crop modal for photo uploads
-        setCropImageSrc(result);
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          [field]: result,
-        }));
-      }
+      setCropImageSrc(reader.result as string);
     };
     reader.readAsDataURL(file);
     setError("");
@@ -232,22 +222,31 @@ export default function VetApplicationForm({
       return;
     }
 
-    if (!formData.collegeCertificateBase64) {
-      setError("Please upload the college certificate");
+    if (formData.collegeCertificateBase64.length === 0) {
+      setError("Please upload the college certificate / تکایە بڕوانامە باربکە");
       setSubmitting(false);
       return;
     }
 
-    if (!formData.nationalIdCardBase64) {
+    if (formData.nationalIdCardBase64.length === 0) {
       setError("Please upload the National ID Card / تکایە کارتی نیشتیمانی باربکە");
       setSubmitting(false);
       return;
     }
 
+    if (formData.infoCardBase64.length === 0) {
+      setError("Please upload the Information Card / تکایە کارتی زانیاری باربکە");
+      setSubmitting(false);
+      return;
+    }
+
+    if (formData.recommendationLetterBase64.length === 0) {
+      setError("Please upload the Recommendation Letter / تکایە پاڵێنامە باربکە");
+      setSubmitting(false);
+      return;
+    }
+
     // Validate university degrees - at least the first entry must be fully filled
-    const hasIncompleteDegrees = universityDegrees.some(
-      (degree) => degree.degreeName || degree.universityName || degree.graduationYear
-    );
     const firstDegree = universityDegrees[0];
     if (!firstDegree.degreeName || !firstDegree.universityName || !firstDegree.graduationYear) {
       setError("Please fill in at least one complete university degree (degree name, university name, and graduation year) / تکایە لانیکەم یەک بڕوانامەی زانکۆ تەواو پڕ بکەرەوە");
@@ -266,13 +265,6 @@ export default function VetApplicationForm({
       }
     }
 
-    // Validate info card is required when married
-    if (formData.marriageStatus === "Married" && !formData.infoCardBase64) {
-      setError("Information card is required for married applicants / کارتی زانیاری بۆ کەسانی خێزاندار پێویستە");
-      setSubmitting(false);
-      return;
-    }
-
     try {
       const url = isEditMode
         ? `/api/vet-applications/${initialData.id}`
@@ -286,6 +278,11 @@ export default function VetApplicationForm({
           ...formData,
           cityId: parseInt(formData.cityId),
           universityDegrees: JSON.stringify(universityDegrees),
+          // Serialize document arrays to JSON strings for storage
+          collegeCertificateBase64: JSON.stringify(formData.collegeCertificateBase64),
+          nationalIdCardBase64: JSON.stringify(formData.nationalIdCardBase64),
+          infoCardBase64: JSON.stringify(formData.infoCardBase64),
+          recommendationLetterBase64: JSON.stringify(formData.recommendationLetterBase64),
           sendEmail: isAdminMode ? formData.sendEmail : true,
         }),
       });
@@ -374,7 +371,7 @@ export default function VetApplicationForm({
                   ref={photoInputRef}
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleFileChange(e, "photoBase64")}
+                  onChange={handlePhotoChange}
                   className="hidden"
                 />
                 <button
@@ -759,78 +756,46 @@ export default function VetApplicationForm({
         <div className="grid md:grid-cols-2 gap-4">
           {/* 1- Certificate */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              <span dir="rtl" className="text-base">1- بڕوانامە *</span>
-              <span className="block text-xs text-gray-500">Certificate</span>
-            </label>
-            <input
-              ref={certInputRef}
-              type="file"
+            <MultiFileUpload
+              label="1- بڕوانامە / Certificate"
+              value={formData.collegeCertificateBase64}
+              onChange={(files) => setFormData((prev) => ({ ...prev, collegeCertificateBase64: files }))}
               accept="image/*,.pdf"
-              onChange={(e) => handleFileChange(e, "collegeCertificateBase64")}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700"
+              required
             />
-            <p className="text-xs text-gray-500 mt-1">Max 5MB. JPG, PNG, or PDF</p>
-            {formData.collegeCertificateBase64 && (
-              <p className="text-xs text-emerald-600 mt-1">✓ Uploaded</p>
-            )}
           </div>
 
           {/* 2- National ID Card */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              <span dir="rtl" className="text-base">2- کارتی نیشتیمانی *</span>
-              <span className="block text-xs text-gray-500">National ID Card *</span>
-            </label>
-            <input
-              ref={nationalIdCardInputRef}
-              type="file"
+            <MultiFileUpload
+              label="2- کارتی نیشتیمانی / National ID Card"
+              value={formData.nationalIdCardBase64}
+              onChange={(files) => setFormData((prev) => ({ ...prev, nationalIdCardBase64: files }))}
               accept="image/*,.pdf"
-              onChange={(e) => handleFileChange(e, "nationalIdCardBase64")}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700"
+              required
             />
-            <p className="text-xs text-gray-500 mt-1">Max 5MB. JPG, PNG, or PDF</p>
-            {formData.nationalIdCardBase64 && (
-              <p className="text-xs text-emerald-600 mt-1">✓ Uploaded</p>
-            )}
           </div>
 
           {/* 3- Information Card */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              <span dir="rtl" className="text-base">3- کارتی زانیاری{formData.marriageStatus === "Married" && <span className="text-red-600"> *</span>}</span>
-              <span className="block text-xs text-gray-500">Information Card{formData.marriageStatus === "Married" && <span className="text-red-600"> (required for married)</span>}</span>
-            </label>
-            <input
-              ref={infoCardInputRef}
-              type="file"
+            <MultiFileUpload
+              label="3- کارتی زانیاری / Information Card"
+              value={formData.infoCardBase64}
+              onChange={(files) => setFormData((prev) => ({ ...prev, infoCardBase64: files }))}
               accept="image/*,.pdf"
-              onChange={(e) => handleFileChange(e, "infoCardBase64")}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700"
+              required
             />
-            <p className="text-xs text-gray-500 mt-1">Max 5MB. JPG, PNG, or PDF</p>
-            {formData.infoCardBase64 && (
-              <p className="text-xs text-emerald-600 mt-1">✓ Uploaded</p>
-            )}
           </div>
 
           {/* 4- Recommendation Letter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              <span dir="rtl" className="text-base">4- پاڵێنامە</span>
-              <span className="block text-xs text-gray-500">Recommendation Letter</span>
-            </label>
-            <input
-              ref={recommendationLetterInputRef}
-              type="file"
+            <MultiFileUpload
+              label="4- پاڵێنامە / Recommendation Letter"
+              value={formData.recommendationLetterBase64}
+              onChange={(files) => setFormData((prev) => ({ ...prev, recommendationLetterBase64: files }))}
               accept="image/*,.pdf"
-              onChange={(e) => handleFileChange(e, "recommendationLetterBase64")}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700"
+              required
             />
-            <p className="text-xs text-gray-500 mt-1">Max 5MB. JPG, PNG, or PDF</p>
-            {formData.recommendationLetterBase64 && (
-              <p className="text-xs text-emerald-600 mt-1">✓ Uploaded</p>
-            )}
           </div>
         </div>
       </div>

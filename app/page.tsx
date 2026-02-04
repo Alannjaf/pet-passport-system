@@ -65,6 +65,12 @@ export default async function Home() {
           manage pet health records, vaccinations, and digital passports.
         </p>
         <div className="flex gap-4 justify-center flex-wrap">
+          <Link
+            href="/apply"
+            className="px-8 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition text-lg font-semibold shadow-lg shadow-amber-200"
+          >
+            Apply for Membership / داواکاری ئەندامەتی
+          </Link>
           {session ? (
             <Link
               href={
@@ -118,6 +124,37 @@ export default async function Home() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Veterinarian CTA Section */}
+      <section className="py-20 bg-gradient-to-br from-amber-50 to-yellow-50">
+        <div className="container mx-auto px-4 text-center">
+          <div className="max-w-3xl mx-auto">
+            <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+            <h3 className="text-3xl font-bold text-gray-900 mb-2">
+              Are You a Veterinarian?
+            </h3>
+            <p className="text-2xl font-semibold text-amber-600 mb-4" dir="rtl">
+              ئایا تۆ پزیشکی ئاژەڵانیت؟
+            </p>
+            <p className="text-lg text-gray-600 mb-4 max-w-2xl mx-auto">
+              Join the Veterinarians Syndicate in Kurdistan Region of Iraq. Apply online for membership and become part of a professional community advancing animal health and welfare.
+            </p>
+            <p className="text-lg text-gray-500 mb-8 max-w-2xl mx-auto" dir="rtl">
+              ئەندام بە لە سەندیکای پزیشکانی ئاژەڵانی هەرێمی کوردستانی عێراق. بە ئۆنلاین داواکاری ئەندامەتی بکە و ببە بەشێک لە کۆمەڵگەیەکی پیشەیی کە لە پێناو تەندروستی و خۆشگوزەرانی ئاژەڵاندا کار دەکات.
+            </p>
+            <Link
+              href="/apply"
+              className="inline-block px-10 py-4 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition text-xl font-bold shadow-lg shadow-amber-200 hover:shadow-xl hover:shadow-amber-300"
+            >
+              Apply for Membership / داواکاری ئەندامەتی
+            </Link>
           </div>
         </div>
       </section>

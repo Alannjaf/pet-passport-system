@@ -117,9 +117,9 @@ export async function PUT(
         phoneNumber: body.phoneNumber,
         emailAddress: body.emailAddress,
         cityId: body.cityId,
-        nationalIdCardBase64: body.nationalIdCardBase64 || null,
-        infoCardBase64: body.infoCardBase64 || null,
-        recommendationLetterBase64: body.recommendationLetterBase64 || null,
+        nationalIdCardBase64: body.nationalIdCardBase64,
+        infoCardBase64: body.infoCardBase64,
+        recommendationLetterBase64: body.recommendationLetterBase64,
         signatureBase64: body.signatureBase64,
         photoBase64: body.photoBase64,
       })

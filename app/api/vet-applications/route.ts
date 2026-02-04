@@ -189,12 +189,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate info card is required when marriage status is "Married"
-    if (body.marriageStatus === "Married" && !body.infoCardBase64) {
-      return NextResponse.json(
-        { error: "Information card is required for married applicants" },
-        { status: 400 }
-      );
+    // All document fields are required (no conditions)
+    const requiredDocArrayFields = [
+      { field: "nationalIdCardBase64", label: "National ID Card" },
+      { field: "infoCardBase64", label: "Information Card" },
+      { field: "recommendationLetterBase64", label: "Recommendation Letter" },
+    ];
+    for (const { field, label } of requiredDocArrayFields) {
+      const val = body[field];
+      if (!val) {
+        return NextResponse.json(
+          { error: `${label} is required / ${field} پێویستە` },
+          { status: 400 }
+        );
+      }
+      // Validate JSON array format
+      try {
+        const arr = typeof val === "string" ? JSON.parse(val) : val;
+        if (!Array.isArray(arr) || arr.length === 0) {
+          return NextResponse.json(
+            { error: `${label} is required — please upload at least one file` },
+            { status: 400 }
+          );
+        }
+      } catch {
+        // Might be a legacy single string — that's OK
+      }
     }
 
     // Validate city exists
@@ -210,16 +230,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const base64Error = validateBase64Fields(body, [
-      'collegeCertificateBase64',
+    // Validate single base64 fields (photo, signature)
+    const singleBase64Error = validateBase64Fields(body, [
       'photoBase64',
       'signatureBase64',
+    ])
+    if (singleBase64Error) {
+      return NextResponse.json({ error: singleBase64Error }, { status: 400 })
+    }
+
+    // Validate array base64 fields (documents may be JSON arrays)
+    const arrayDocFields = [
+      'collegeCertificateBase64',
       'nationalIdCardBase64',
       'infoCardBase64',
       'recommendationLetterBase64',
-    ])
-    if (base64Error) {
-      return NextResponse.json({ error: base64Error }, { status: 400 })
+    ];
+    for (const field of arrayDocFields) {
+      const val = body[field];
+      if (!val) continue;
+      try {
+        const arr = typeof val === 'string' ? JSON.parse(val) : val;
+        if (Array.isArray(arr)) {
+          for (const item of arr) {
+            const err = validateBase64Fields({ [field]: item }, [field]);
+            if (err) return NextResponse.json({ error: err }, { status: 400 });
+          }
+          continue;
+        }
+      } catch {}
+      // Fallback: validate as single string
+      const err = validateBase64Fields(body, [field]);
+      if (err) return NextResponse.json({ error: err }, { status: 400 });
     }
 
     // Generate unique tracking token
@@ -249,9 +291,9 @@ export async function POST(request: NextRequest) {
         phoneNumber: body.phoneNumber,
         emailAddress: body.emailAddress,
         cityId: body.cityId,
-        nationalIdCardBase64: body.nationalIdCardBase64 || null,
-        infoCardBase64: body.infoCardBase64 || null,
-        recommendationLetterBase64: body.recommendationLetterBase64 || null,
+        nationalIdCardBase64: body.nationalIdCardBase64,
+        infoCardBase64: body.infoCardBase64,
+        recommendationLetterBase64: body.recommendationLetterBase64,
         confirmationChecked: isAdminSubmission ? true : body.confirmationChecked,
         signatureBase64: body.signatureBase64 || "",
         photoBase64: body.photoBase64,

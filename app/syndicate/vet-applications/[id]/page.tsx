@@ -190,11 +190,20 @@ export default function AdminApplicationReviewPage({
     URL.revokeObjectURL(url);
   };
 
-  const renderAttachment = (base64: string | null, label: string, filename: string) => {
-    if (!base64) return null;
+  // Parse a stored value that may be a JSON array or a single base64 string
+  const parseDocValue = (val: string | null): string[] => {
+    if (!val) return [];
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+    return [val];
+  };
+
+  const renderSingleAttachment = (base64: string, label: string, filename: string, index?: number) => {
+    const key = index !== undefined ? `${label}-${index}` : label;
     return (
-      <div>
-        <p className="text-sm text-gray-500 mb-2">{label}</p>
+      <div key={key}>
         {base64.startsWith("data:image") ? (
           <img
             src={base64}
@@ -209,9 +218,22 @@ export default function AdminApplicationReviewPage({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Download {label} (PDF)
+            Download {label} (PDF){index !== undefined ? ` #${index + 1}` : ""}
           </button>
         )}
+      </div>
+    );
+  };
+
+  const renderAttachment = (rawValue: string | null, label: string, filename: string) => {
+    const files = parseDocValue(rawValue);
+    if (files.length === 0) return null;
+    return (
+      <div>
+        <p className="text-sm text-gray-500 mb-2">{label} ({files.length} file{files.length > 1 ? "s" : ""})</p>
+        <div className="space-y-2">
+          {files.map((file, i) => renderSingleAttachment(file, label, filename, files.length > 1 ? i : undefined))}
+        </div>
       </div>
     );
   };

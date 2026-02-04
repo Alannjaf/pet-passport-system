@@ -4,6 +4,7 @@ const ALLOWED_MIME_PREFIXES = [
   'data:image/png',
   'data:image/webp',
   'data:image/gif',
+  'data:application/pdf',
 ]
 
 const MAX_BASE64_SIZE = 5 * 1024 * 1024 // 5MB decoded
@@ -17,7 +18,7 @@ export function validateBase64Image(
 
   const hasValidPrefix = ALLOWED_MIME_PREFIXES.some(prefix => value.startsWith(prefix))
   if (!hasValidPrefix) {
-    return `${fieldName}: Invalid image format. Allowed: JPEG, PNG, WebP, GIF`
+    return `${fieldName}: Invalid file format. Allowed: JPEG, PNG, WebP, GIF, PDF`
   }
 
   const commaIndex = value.indexOf(',')
