@@ -89,6 +89,13 @@ export default function ApplyPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
+        <Link
+          href="/"
+          className="inline-flex items-center text-emerald-600 hover:text-emerald-700 font-medium mb-6"
+        >
+          ← Back to Home
+        </Link>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
