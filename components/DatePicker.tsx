@@ -21,15 +21,15 @@ export default function DatePicker({
   maxDate,
   minDate,
 }: DatePickerProps) {
-  // Convert YYYY-MM-DD string to Date object
-  const selectedDate = value ? new Date(value + "T00:00:00") : null;
+  // Convert YYYY-MM-DD string to Date object (using UTC to avoid timezone/DST issues)
+  const selectedDate = value ? new Date(value + "T00:00:00Z") : null;
 
-  // Convert Date object back to YYYY-MM-DD string
+  // Convert Date object back to YYYY-MM-DD string (using UTC methods)
   const handleChange = (date: Date | null) => {
     if (date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(date.getUTCDate()).padStart(2, "0");
       onChange(`${year}-${month}-${day}`);
     } else {
       onChange("");

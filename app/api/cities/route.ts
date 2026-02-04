@@ -16,11 +16,7 @@ export async function GET() {
       ? await db.select().from(cities).orderBy(asc(cities.nameEn))
       : await db.select().from(cities).where(eq(cities.isActive, true)).orderBy(asc(cities.nameEn));
 
-    return NextResponse.json(filteredCities, {
-      headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-      },
-    });
+    return NextResponse.json(filteredCities);
   } catch (error) {
     console.error("Error fetching cities:", error);
     return NextResponse.json(
