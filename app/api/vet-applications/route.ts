@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth/auth";
 import { eq, desc, inArray, and, count } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { sendEmail, applicationSubmittedEmail } from "@/lib/email/send";
-import { validateBase64Fields, safeParseInt } from "@/lib/utils/validation";
+import { validateBase64Fields, validateBase64ArrayField, safeParseInt } from "@/lib/utils/validation";
 import { rateLimit } from "@/lib/utils/rate-limit";
 
 // GET - Fetch applications (branch/admin only, filtered by city for branch heads)
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: singleBase64Error }, { status: 400 })
     }
 
-    // Validate array base64 fields (documents may be JSON arrays)
+    // Validate array base64 fields (documents may be JSON arrays or legacy single strings)
     const arrayDocFields = [
       'collegeCertificateBase64',
       'nationalIdCardBase64',
@@ -249,18 +249,7 @@ export async function POST(request: NextRequest) {
     for (const field of arrayDocFields) {
       const val = body[field];
       if (!val) continue;
-      try {
-        const arr = typeof val === 'string' ? JSON.parse(val) : val;
-        if (Array.isArray(arr)) {
-          for (const item of arr) {
-            const err = validateBase64Fields({ [field]: item }, [field]);
-            if (err) return NextResponse.json({ error: err }, { status: 400 });
-          }
-          continue;
-        }
-      } catch {}
-      // Fallback: validate as single string
-      const err = validateBase64Fields(body, [field]);
+      const err = validateBase64ArrayField(val, field);
       if (err) return NextResponse.json({ error: err }, { status: 400 });
     }
 

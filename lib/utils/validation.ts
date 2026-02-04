@@ -48,6 +48,54 @@ export function validateBase64Fields(
   return null
 }
 
+/**
+ * Validate a document field that may be either a JSON-stringified array of
+ * base64 data-URIs or a single base64 data-URI string (legacy format).
+ * Returns an error message string or null if valid.
+ */
+export function validateBase64ArrayField(
+  value: unknown,
+  fieldName: string,
+  maxSizeBytes: number = MAX_BASE64_SIZE
+): string | null {
+  if (!value) return null
+
+  // Try to parse as JSON array (value may be a JSON string or already an array)
+  let items: unknown[] | null = null
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed)) {
+        items = parsed
+      }
+    } catch {
+      // Not JSON — treat as a single legacy base64 string
+      return validateBase64Image(value, fieldName, maxSizeBytes)
+    }
+  } else if (Array.isArray(value)) {
+    items = value
+  }
+
+  if (items) {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (typeof item !== 'string') {
+        return `${fieldName}: file ${i + 1} is not a valid base64 string`
+      }
+      const err = validateBase64Image(item, fieldName, maxSizeBytes)
+      if (err) return err
+    }
+    return null
+  }
+
+  // Fallback: validate as single string
+  if (typeof value === 'string') {
+    return validateBase64Image(value, fieldName, maxSizeBytes)
+  }
+
+  return `${fieldName}: invalid format`
+}
+
 export function safeParseInt(value: string | null, defaultValue: number): number {
   if (!value) return defaultValue
   const parsed = parseInt(value, 10)

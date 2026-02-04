@@ -306,7 +306,7 @@ export default function VetApplicationForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} noValidate className="space-y-8">
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -809,15 +809,15 @@ export default function VetApplicationForm({
         
         {!isAdminMode && (
           <div className="mb-6">
-            <label className="flex items-start gap-3 cursor-pointer">
+            <label className="flex items-start gap-3 cursor-pointer p-4 -m-4 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors">
               <input
                 type="checkbox"
                 name="confirmationChecked"
                 checked={formData.confirmationChecked}
                 onChange={handleChange}
-                className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 mt-0.5"
+                className="w-7 h-7 min-w-[1.75rem] text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 mt-0.5"
               />
-              <span className="text-sm text-gray-700">
+              <span className="text-base text-gray-700 leading-relaxed">
                 I confirm that all the information provided above is true and correct to the best of my knowledge. I understand that providing false information may result in rejection of my application or revocation of membership.
                 <br />
                 <span dir="rtl" className="block mt-2 text-right">
