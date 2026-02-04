@@ -271,28 +271,49 @@ export default function VetApplicationForm({
         : "/api/vet-applications";
       const method = isEditMode ? "PUT" : "POST";
 
+      const payload = JSON.stringify({
+        ...formData,
+        cityId: parseInt(formData.cityId),
+        universityDegrees: JSON.stringify(universityDegrees),
+        // Serialize document arrays to JSON strings for storage
+        collegeCertificateBase64: JSON.stringify(formData.collegeCertificateBase64),
+        nationalIdCardBase64: JSON.stringify(formData.nationalIdCardBase64),
+        infoCardBase64: JSON.stringify(formData.infoCardBase64),
+        recommendationLetterBase64: JSON.stringify(formData.recommendationLetterBase64),
+        sendEmail: isAdminMode ? formData.sendEmail : true,
+      });
+
+      // Pre-submission size check (Netlify ~3.5MB effective limit for JSON payloads)
+      const payloadSizeMB = new Blob([payload]).size / (1024 * 1024);
+      if (payloadSizeMB > 4.5) {
+        throw new Error(
+          "The uploaded files are too large. Please use smaller or fewer images and try again. / فایلەکان زۆر گەورەن. تکایە وێنەی بچووکتر بەکاربهێنە و دووبارە هەوڵ بدەرەوە."
+        );
+      }
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          cityId: parseInt(formData.cityId),
-          universityDegrees: JSON.stringify(universityDegrees),
-          // Serialize document arrays to JSON strings for storage
-          collegeCertificateBase64: JSON.stringify(formData.collegeCertificateBase64),
-          nationalIdCardBase64: JSON.stringify(formData.nationalIdCardBase64),
-          infoCardBase64: JSON.stringify(formData.infoCardBase64),
-          recommendationLetterBase64: JSON.stringify(formData.recommendationLetterBase64),
-          sendEmail: isAdminMode ? formData.sendEmail : true,
-        }),
+        body: payload,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || `Failed to ${isEditMode ? "update" : "submit"} application`);
+      const responseText = await response.text();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let result: any;
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        if (!response.ok) {
+          throw new Error(
+            "The uploaded files are too large for the server. Please use smaller or fewer images and try again. / فایلەکان زۆر گەورەن. تکایە وێنەی بچووکتر بەکاربهێنە و دووبارە هەوڵ بدەرەوە."
+          );
+        }
+        throw new Error(`Failed to ${isEditMode ? "update" : "submit"} application`);
       }
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || `Failed to ${isEditMode ? "update" : "submit"} application`);
+      }
       if (isEditMode) {
         onSuccess(result.trackingToken || "", result.id || initialData.id);
       } else {

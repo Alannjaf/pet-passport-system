@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { compressImage } from "@/lib/utils/compress-image";
 
 interface MultiFileUploadProps {
   value: string[];
@@ -43,11 +44,16 @@ export default function MultiFileUpload({
         continue;
       }
 
-      const base64 = await new Promise<string>((resolve) => {
+      let base64 = await new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
         reader.readAsDataURL(file);
       });
+
+      // Compress image files to reduce payload size; PDFs pass through
+      if (file.type.startsWith("image/")) {
+        base64 = await compressImage(base64);
+      }
 
       newBase64s.push(base64);
     }

@@ -121,9 +121,18 @@ function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
+      const MAX_DIM = 800;
+      let outWidth = pixelCrop.width;
+      let outHeight = pixelCrop.height;
+      if (outWidth > MAX_DIM || outHeight > MAX_DIM) {
+        const ratio = Math.min(MAX_DIM / outWidth, MAX_DIM / outHeight);
+        outWidth = Math.round(outWidth * ratio);
+        outHeight = Math.round(outHeight * ratio);
+      }
+
       const canvas = document.createElement("canvas");
-      canvas.width = pixelCrop.width;
-      canvas.height = pixelCrop.height;
+      canvas.width = outWidth;
+      canvas.height = outHeight;
       const ctx = canvas.getContext("2d");
 
       if (!ctx) {
@@ -139,11 +148,11 @@ function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<string> {
         pixelCrop.height,
         0,
         0,
-        pixelCrop.width,
-        pixelCrop.height
+        outWidth,
+        outHeight
       );
 
-      resolve(canvas.toDataURL("image/jpeg", 0.92));
+      resolve(canvas.toDataURL("image/jpeg", 0.75));
     };
     image.onerror = () => reject(new Error("Failed to load image"));
     image.src = imageSrc;

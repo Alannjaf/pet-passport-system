@@ -113,9 +113,18 @@ export default function MemberForm({
         body: JSON.stringify(payload),
       });
 
+      const text = await response.text();
+      let data: Record<string, unknown> = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        if (!response.ok) {
+          throw new Error("Failed to save member. The request may be too large.");
+        }
+      }
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to save member");
+        throw new Error((data.error as string) || "Failed to save member");
       }
 
       router.push("/syndicate/members");
@@ -137,8 +146,12 @@ export default function MemberForm({
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete member");
+        const text = await response.text();
+        let data: Record<string, unknown> = {};
+        try {
+          data = JSON.parse(text);
+        } catch {}
+        throw new Error((data.error as string) || "Failed to delete member");
       }
 
       router.push("/syndicate/members");
