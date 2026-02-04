@@ -21,16 +21,16 @@ export default function DatePicker({
   maxDate,
   minDate,
 }: DatePickerProps) {
-  // Convert YYYY-MM-DD string to Date object (using UTC to avoid timezone/DST issues)
-  const parsed = new Date(value + "T00:00:00Z");
-  const selectedDate = value && !isNaN(parsed.getTime()) ? parsed : null;
+  // Convert YYYY-MM-DD string to Date object (local midnight to match react-datepicker)
+  const parsed = value ? new Date(value + "T00:00:00") : null;
+  const selectedDate = parsed && !isNaN(parsed.getTime()) ? parsed : null;
 
-  // Convert Date object back to YYYY-MM-DD string (using UTC methods)
+  // Convert Date object back to YYYY-MM-DD string (using local methods — react-datepicker produces local-time dates)
   const handleChange = (date: Date | null) => {
     if (date && !isNaN(date.getTime())) {
-      const year = date.getUTCFullYear();
-      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-      const day = String(date.getUTCDate()).padStart(2, "0");
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       onChange(`${year}-${month}-${day}`);
     } else if (date === null) {
       // Field was explicitly cleared — clear parent value
